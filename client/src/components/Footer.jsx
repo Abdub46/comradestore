@@ -23,21 +23,23 @@ export default function Footer() {
 
         {/* Center: Contact Us + Terms of Service - each opens in a new tab */}
         <div className="flex items-center gap-4 font-medium">
-          
+          <a
             href="/contact"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-primary-600 dark:hover:text-primary-300"
-          <a>
+          >
             Contact Us
           </a>
+
           <span className="text-gray-300 dark:text-gray-600">|</span>
-          
+
+          <a
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-primary-600 dark:hover:text-primary-300"
-          <a>
+          >
             Terms of Service
           </a>
         </div>
@@ -56,10 +58,12 @@ export default function Footer() {
               <p className="text-gray-700 dark:text-gray-200 mb-2">
                 Enjoyed HomeMarket? Send a coffee via <strong>M-Pesa Send Money</strong> to:
               </p>
+
               <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2">
                 <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
                   {MPESA_NUMBER}
                 </span>
+
                 <button
                   onClick={handleCopy}
                   className="ml-auto text-xs bg-primary-600 text-white px-2 py-1 rounded-md hover:bg-primary-700"
@@ -67,6 +71,7 @@ export default function Footer() {
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
+
               <p className="text-xs text-gray-400 mt-2">
                 On your phone: M-Pesa menu &rarr; Send Money &rarr; enter this number.
               </p>
