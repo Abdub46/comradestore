@@ -14,6 +14,8 @@ import EditProduct from './pages/EditProduct';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Cart from './pages/Cart';
+import ContactUs from './pages/ContactUs';
+import TermsOfService from './pages/TermsOfService';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -28,6 +30,8 @@ export default function App() {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/terms" element={<TermsOfService />} />
 
           <Route
             path="/sell"

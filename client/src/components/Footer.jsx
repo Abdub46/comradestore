@@ -15,10 +15,34 @@ export default function Footer() {
 
   return (
     <footer className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 mt-16">
-      <div className="max-w-7xl mx-auto px-4 py-8 text-sm text-gray-500 dark:text-gray-400 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <p>&copy; {new Date().getFullYear()} HomeMarket. Buy and sell second-hand household items.</p>
-        <p>Built with the MERN stack &mdash; no payments, contact sellers directly on WhatsApp.</p>
+      <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
+        {/* Left: copyright */}
+        <p className="text-center md:text-left whitespace-nowrap">
+          &copy; {new Date().getFullYear()} HorizonSolutions Kenya. All rights reserved.
+        </p>
 
+        {/* Center: Contact Us + Terms of Service - each opens in a new tab */}
+        <div className="flex items-center gap-4 font-medium">
+          
+            href="/contact"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary-600 dark:hover:text-primary-300"
+          <a>
+            Contact Us
+          </a>
+          <span className="text-gray-300 dark:text-gray-600">|</span>
+          
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary-600 dark:hover:text-primary-300"
+          <a>
+            Terms of Service
+          </a>
+        </div>
+
+        {/* Right: Buy Me a Coffee - unchanged */}
         <div className="relative">
           <button
             onClick={() => setShowCoffee((prev) => !prev)}
