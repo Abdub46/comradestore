@@ -6,7 +6,7 @@ export default function TermsOfService() {
       <h1 className="text-2xl font-bold mb-6">Terms of Service</h1>
       <div className="space-y-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
         <p>
-          HomeMarket is a listing platform only. We do not provide logistics, delivery,
+          HorizonMarket is a listing platform only. We do not provide logistics, delivery,
           or courier services of any kind.
         </p>
         <p>
@@ -16,7 +16,7 @@ export default function TermsOfService() {
           button on each listing) to arrange viewing, payment, and pickup or delivery.
         </p>
         <p>
-          HomeMarket is not responsible for the condition of items, the conduct of
+          HorizonMarket is not responsible for the condition of items, the conduct of
           buyers or sellers, or any disputes, losses, or damages arising from
           transactions made through this platform. Please exercise due diligence when
           meeting sellers or buyers in person.
