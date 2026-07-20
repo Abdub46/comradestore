@@ -43,9 +43,24 @@ if (process.env.NODE_ENV === 'production') {
 // Strict-Transport-Security, hides X-Powered-By, etc.)
 app.use(helmet());
 
+// CLIENT_URL can hold one or more comma-separated origins, e.g.
+// "https://www.thishorizon.name.ng,https://thishorizon.name.ng"
+// Falls back to localhost for local development.
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((url) => url.trim());
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin header (health checks, curl, some
+      // mobile clients) as well as any origin in the allowed list
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
