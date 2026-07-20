@@ -3,12 +3,15 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { isValidEmail } from '../utils/validators';
+import { useState } from 'react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -52,11 +55,22 @@ export default function Login() {
 
         <div>
           <label className="text-sm font-medium">Password</label>
-          <input
-            type="password"
-            {...register('password', { required: true })}
-            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-          />
+
+         <div className="relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    {...register("password", { required: true })}
+    className="w-full pr-10"
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+  >
+    {showPassword ? <FaEyeSlash /> : <FaEye />}
+  </button>
+</div>
           {errors.password && <p className="text-xs text-red-600 mt-1">Password is required</p>}
         </div>
 
