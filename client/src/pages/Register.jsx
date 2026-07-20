@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { notBlank, isValidEmail } from '../utils/validators';
+import { isValidKenyanPhone } from '../utils/phone';
 
 export default function Register() {
   const { register: doRegister } = useAuth();
@@ -44,7 +46,11 @@ export default function Register() {
           <div>
             <label className="text-sm font-medium">First Name</label>
             <input
-              {...register('firstName', { required: 'First name is required' })}
+              {...register('firstName', {
+              required: 'First name is required',
+              minLength: { value: 2, message: 'Must be at least 2 characters' },
+              validate: notBlank,
+})}
               className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
             />
             {errors.firstName && <p className="text-xs text-red-600 mt-1">{errors.firstName.message}</p>}
@@ -52,7 +58,11 @@ export default function Register() {
           <div>
             <label className="text-sm font-medium">Last Name</label>
             <input
-              {...register('lastName', { required: 'Last name is required' })}
+              {...register('lastName', {
+              required: 'Last name is required',
+              minLength: { value: 2, message: 'Must be at least 2 characters' },
+              validate: notBlank,
+            })}
               className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
             />
             {errors.lastName && <p className="text-xs text-red-600 mt-1">{errors.lastName.message}</p>}
@@ -63,7 +73,7 @@ export default function Register() {
           <label className="text-sm font-medium">Email</label>
           <input
             type="email"
-            {...register('email', { required: 'Email is required' })}
+            {...register('email', { required: 'Email is required', validate: isValidEmail })}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           />
           {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
@@ -73,7 +83,10 @@ export default function Register() {
           <label className="text-sm font-medium">WhatsApp Phone Number</label>
           <input
             placeholder="0712345678 or +254712345678"
-            {...register('phone', { required: 'Phone number is required' })}
+            {...register('phone', {
+            required: 'Phone number is required',
+            validate: (value) => isValidKenyanPhone(value) || 'Please enter a valid Kenyan phone number',
+          })}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           />
           {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone.message}</p>}

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { createProduct, CATEGORIES } from '../services/productService';
 import { useAuth } from '../contexts/AuthContext';
+import { notBlank } from '../utils/validators';
 
 export default function SellItem() {
   const { user } = useAuth();
@@ -57,7 +58,11 @@ export default function SellItem() {
         <div>
           <label className="text-sm font-medium">Product Name</label>
           <input
-            {...register('title', { required: 'Product name is required' })}
+            {...register('title', {
+  required: 'Product name is required',
+  minLength: { value: 3, message: 'Must be at least 3 characters' },
+  validate: notBlank,
+})}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           />
           {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title.message}</p>}
@@ -81,7 +86,11 @@ export default function SellItem() {
           <label className="text-sm font-medium">Description</label>
           <textarea
             rows={4}
-            {...register('description', { required: 'Description is required' })}
+            {...register('description', {
+  required: 'Description is required',
+  minLength: { value: 20, message: 'Please write at least 20 characters describing the item' },
+  validate: notBlank,
+})}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           />
           {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description.message}</p>}
@@ -90,12 +99,15 @@ export default function SellItem() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium">Price (KSh)</label>
-            <input
-              type="number"
-              {...register('price', { required: true, min: 0 })}
-              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-            />
-            {errors.price && <p className="text-xs text-red-600 mt-1">Valid price is required</p>}
+       <input
+  type="number"
+  {...register('price', {
+    required: 'Price is required',
+    min: { value: 1, message: 'Price must be greater than 0' },
+  })}
+  className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+/>
+{errors.price && <p className="text-xs text-red-600 mt-1">{errors.price.message}</p>}
           </div>
           <div>
             <label className="text-sm font-medium">Condition</label>

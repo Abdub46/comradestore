@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { isValidEmail } from '../utils/validators';
 
 export default function Login() {
   const { login } = useAuth();
@@ -41,12 +42,12 @@ export default function Login() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="text-sm font-medium">Email</label>
-          <input
+                    <input
             type="email"
-            {...register('email', { required: true })}
+            {...register('email', { required: 'Email is required', validate: isValidEmail })}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           />
-          {errors.email && <p className="text-xs text-red-600 mt-1">Email is required</p>}
+          {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
         </div>
 
         <div>

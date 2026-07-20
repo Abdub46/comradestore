@@ -56,7 +56,7 @@ export default function Footer() {
           {showCoffee && (
             <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 w-64 max-w-[85vw] bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow-lg p-4 text-left">
               <p className="text-gray-700 dark:text-gray-200 mb-2">
-                Enjoyed HomeMarket? Send a coffee via <strong>M-Pesa Send Money</strong> to:
+                Enjoyed HorizonMarket? Send a coffee via <strong>M-Pesa Send Money</strong> to:
               </p>
 
               <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-md px-3 py-2">

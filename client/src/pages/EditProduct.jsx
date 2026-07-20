@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById, updateProduct, CATEGORIES } from '../services/productService';
 import Loader from '../components/Loader';
+import { notBlank } from '../utils/validators';
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -68,10 +69,15 @@ export default function EditProduct() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="text-sm font-medium">Product Name</label>
-          <input
-            {...register('title', { required: true })}
-            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-          />
+         <input
+  {...register('title', {
+    required: 'Product name is required',
+    minLength: { value: 3, message: 'Must be at least 3 characters' },
+    validate: notBlank,
+  })}
+  className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+/>
+{errors.title && <p className="text-xs text-red-600 mt-1">{errors.title.message}</p>}
         </div>
 
         <div>
@@ -80,29 +86,39 @@ export default function EditProduct() {
             {...register('category', { required: true })}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          {CATEGORIES.map((c) => (
+  <option key={c} value={c}>{c}</option>
+))}
+</select>
+{errors.category && <p className="text-xs text-red-600 mt-1">Category is required</p>}
         </div>
 
         <div>
           <label className="text-sm font-medium">Description</label>
           <textarea
-            rows={4}
-            {...register('description', { required: true })}
-            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-          />
+  rows={4}
+  {...register('description', {
+    required: 'Description is required',
+    minLength: { value: 20, message: 'Please write at least 20 characters describing the item' },
+    validate: notBlank,
+  })}
+  className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+/>
+{errors.description && <p className="text-xs text-red-600 mt-1">{errors.description.message}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium">Price (KSh)</label>
-            <input
-              type="number"
-              {...register('price', { required: true, min: 0 })}
-              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-            />
+           <input
+  type="number"
+  {...register('price', {
+    required: 'Price is required',
+    min: { value: 1, message: 'Price must be greater than 0' },
+  })}
+  className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+/>
+{errors.price && <p className="text-xs text-red-600 mt-1">{errors.price.message}</p>}
           </div>
           <div>
             <label className="text-sm font-medium">Condition</label>
@@ -110,9 +126,10 @@ export default function EditProduct() {
               {...register('condition', { required: true })}
               className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
             >
-              <option value="New">New</option>
-              <option value="Used">Used</option>
-            </select>
+            <option value="New">New</option>
+<option value="Used">Used</option>
+</select>
+{errors.condition && <p className="text-xs text-red-600 mt-1">Condition is required</p>}
           </div>
         </div>
 
@@ -122,10 +139,11 @@ export default function EditProduct() {
             {...register('residence', { required: true })}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           >
-            <option value="Sokomoko">Sokomoko</option>
-            <option value="KU">KU</option>
-            <option value="Annex">Annex</option>
-          </select>
+           <option value="Sokomoko">Sokomoko</option>
+<option value="KU">KU</option>
+<option value="Annex">Annex</option>
+</select>
+{errors.residence && <p className="text-xs text-red-600 mt-1">Residence is required</p>}
         </div>
 
         {existingImages.length > 0 && (
