@@ -6,7 +6,7 @@ export default function Hero() {
     <div className="bg-gradient-to-br from-primary-600 to-primary-700 text-white">
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
         <h1 className="text-3xl md:text-5xl font-bold mb-4">
-          Buy &amp; Sell Second-Hand Household Items
+          Buy &amp; Sell Second-Hand Items
         </h1>
         <p className="text-primary-50 max-w-2xl mx-auto mb-8">
           Beds, sofas, kitchen items, electronics and more &mdash; find great deals near you,
