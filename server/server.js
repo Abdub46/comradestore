@@ -15,6 +15,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const mpesaRoutes = require('./routes/mpesaRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Fail fast if critical secrets are missing - safer than starting with an
 // insecure default JWT secret
@@ -83,7 +84,8 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/mpesa', mpesaRoutes);
-app.use('/api/contact', contactRoutes)
+app.use('/api/contact', contactRoutes);
+app.use('/api/admin', adminRoutes)
 
 // 404 handler for unknown API routes
 app.use('/api', (req, res) => {
