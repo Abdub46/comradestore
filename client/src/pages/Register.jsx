@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { notBlank, isValidEmail } from '../utils/validators';
 import { isValidKenyanPhone } from '../utils/phone';
-import { useState } from 'react';
+
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Register() {

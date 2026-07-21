@@ -13,6 +13,8 @@ import SellItem from './pages/SellItem';
 import EditProduct from './pages/EditProduct';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
+
 import Cart from './pages/Cart';
 import ContactUs from './pages/ContactUs';
 import TermsOfService from './pages/TermsOfService';
@@ -58,15 +60,24 @@ export default function App() {
             }
           />
           <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
+  path="/profile"
+  element={
+    <PrivateRoute>
+      <Profile />
+    </PrivateRoute>
+  }
+/>
+<Route
+  path="/admin"
+  element={
+    <PrivateRoute>
+      <AdminDashboard />
+    </PrivateRoute>
+  }
+/>
 
-          <Route path="*" element={<NotFound />} />
+<Route path="*" element={<NotFound />} />
+
         </Routes>
       </main>
       <Footer />

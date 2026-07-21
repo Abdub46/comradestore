@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { isValidEmail } from '../utils/validators';
-import { useState } from 'react';
+
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Login() {
