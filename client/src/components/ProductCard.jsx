@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatKsh } from '../utils/format';
+import { useAuth } from '../contexts/AuthContext';
 
 const STATUS_STYLES = {
   Available: 'bg-green-100 text-green-700',
@@ -9,8 +10,10 @@ const STATUS_STYLES = {
 };
 
 export default function ProductCard({ product, onAddToCart, inCart }) {
+  const { user } = useAuth();
   const image = product.images && product.images[0];
   const isSold = product.status === 'Sold';
+  const isOwner = Boolean(user && product.seller && user._id === product.seller._id);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
@@ -36,13 +39,22 @@ export default function ProductCard({ product, onAddToCart, inCart }) {
           {product.condition} &middot; {product.residence}
         </p>
 
-        <button
-          onClick={() => onAddToCart && onAddToCart(product)}
-          disabled={isSold || inCart}
-          className="mt-2 w-full text-sm py-1.5 rounded-md bg-primary-600 text-white disabled:bg-gray-300 disabled:text-gray-500 hover:bg-primary-700 disabled:cursor-not-allowed"
-        >
-          {isSold ? 'Sold Out' : inCart ? 'In Cart' : 'Add to Cart'}
-        </button>
+        {isOwner ? (
+          <button
+            disabled
+            className="mt-2 w-full text-sm py-1.5 rounded-md bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+          >
+            Your Listing
+          </button>
+        ) : (
+          <button
+            onClick={() => onAddToCart && onAddToCart(product)}
+            disabled={isSold || inCart}
+            className="mt-2 w-full text-sm py-1.5 rounded-md bg-primary-600 text-white disabled:bg-gray-300 disabled:text-gray-500 hover:bg-primary-700 disabled:cursor-not-allowed"
+          >
+            {isSold ? 'Sold Out' : inCart ? 'In Cart' : 'Add to Cart'}
+          </button>
+        )}
       </div>
     </div>
   );

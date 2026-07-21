@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Loader from '../components/Loader';
-import { getProductById, markAsContacted } from '../services/productService';
+import { getProductById, markAsContacted, deleteProduct } from '../services/productService';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import { formatKsh, timeAgo } from '../utils/format';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 
@@ -14,10 +15,12 @@ const STATUS_STYLES = {
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const { addToCart, isInCart } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -31,6 +34,7 @@ export default function ProductDetail() {
 
   const isSold = product.status === 'Sold';
   const inCart = isInCart(product._id);
+  const isOwner = Boolean(user && product.seller && user._id === product.seller._id);
 
   // Clicking "Contact Seller" opens WhatsApp in a new tab (target="_blank"),
   // so this tab stays open and this request still completes in the background.
@@ -39,6 +43,17 @@ export default function ProductDetail() {
       .then(() => setProduct((prev) => ({ ...prev, status: 'Sold' })))
       .catch((err) => console.error('Failed to update product status:', err));
   };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+    try {
+      await deleteProduct(product._id);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+    }
+  };
+
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -94,15 +109,35 @@ export default function ProductDetail() {
 
         <p className="text-sm leading-relaxed mb-6 whitespace-pre-line">{product.description}</p>
 
+
+        
+
         <div className="flex gap-3 mb-6">
-          <button
-            onClick={() => addToCart(product)}
-            disabled={isSold || inCart}
-            className="flex-1 bg-gray-100 dark:bg-gray-700 font-medium py-2.5 rounded-md disabled:opacity-50"
-          >
-            {isSold ? 'Sold Out' : inCart ? 'Added to Cart' : 'Add to Cart'}
-          </button>
-          <a
+          {isOwner ? (
+            <>
+              <Link
+                to={`/edit-product/${product._id}`}
+                className="flex-1 text-center bg-gray-100 dark:bg-gray-700 font-medium py-2.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Edit
+              </Link>
+              <button
+                onClick={handleDelete}
+                className="flex-1 bg-red-50 text-red-600 font-medium py-2.5 rounded-md hover:bg-red-100"
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => addToCart(product)}
+              disabled={isSold || inCart}
+              className="flex-1 bg-gray-100 dark:bg-gray-700 font-medium py-2.5 rounded-md disabled:opacity-50"
+            >
+              {isSold ? 'Sold Out' : inCart ? 'Added to Cart' : 'Add to Cart'}
+            </button>
+          )}
+          
             href={buildWhatsAppLink(product.seller.phone, product.title)}
             target="_blank"
             rel="noreferrer"
@@ -110,10 +145,12 @@ export default function ProductDetail() {
             className={`flex-1 text-center font-medium py-2.5 rounded-md text-white ${
               isSold ? 'bg-gray-300 pointer-events-none' : 'bg-green-600 hover:bg-green-700'
             }`}
-          >
+          <a>
             Contact Seller on WhatsApp
           </a>
         </div>
+
+
 
         {/* Seller card */}
         <Link
