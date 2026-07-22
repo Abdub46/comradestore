@@ -54,7 +54,6 @@ export default function ProductDetail() {
     }
   };
 
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Image gallery */}
@@ -109,9 +108,6 @@ export default function ProductDetail() {
 
         <p className="text-sm leading-relaxed mb-6 whitespace-pre-line">{product.description}</p>
 
-
-        
-
         <div className="flex gap-3 mb-6">
           {isOwner ? (
             <>
@@ -137,7 +133,8 @@ export default function ProductDetail() {
               {isSold ? 'Sold Out' : inCart ? 'Added to Cart' : 'Add to Cart'}
             </button>
           )}
-          
+
+          <a
             href={buildWhatsAppLink(product.seller.phone, product.title)}
             target="_blank"
             rel="noreferrer"
@@ -145,12 +142,10 @@ export default function ProductDetail() {
             className={`flex-1 text-center font-medium py-2.5 rounded-md text-white ${
               isSold ? 'bg-gray-300 pointer-events-none' : 'bg-green-600 hover:bg-green-700'
             }`}
-          <a>
+          >
             Contact Seller on WhatsApp
           </a>
         </div>
-
-
 
         {/* Seller card */}
         <Link
