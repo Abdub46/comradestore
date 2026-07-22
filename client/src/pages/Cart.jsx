@@ -46,13 +46,13 @@ export default function Cart() {
                 {formatKsh(product.price)}
               </p>
             </div>
-            <a
+            <a>
               href={buildWhatsAppLink(product.seller.phone, product.title)}
               target="_blank"
               rel="noreferrer"
               onClick={() => markAsContacted(product._id).catch((err) => console.error(err))}
               className="text-sm px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700"
-            >
+            
               Contact Seller
             </a>
             <button
