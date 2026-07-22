@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const { stripHtml } = require('../utils/sanitize');
 
 // @desc    Get all products (with search + filters + pagination)
 // @route   GET /api/products
@@ -98,15 +99,14 @@ const createProduct = async (req, res, next) => {
 
     const product = await Product.create({
       seller: req.user._id,
-      title,
-      description,
+      title: stripHtml(title),
+      description: stripHtml(description),
       category,
       price,
       condition,
       residence,
       images,
     });
-
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -130,7 +130,11 @@ const updateProduct = async (req, res, next) => {
 
     const fields = ['title', 'description', 'category', 'price', 'condition', 'residence'];
     fields.forEach((field) => {
-      if (req.body[field] !== undefined) product[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        const value = req.body[field];
+        // title/description are free text - strip any HTML/scripts before saving
+        product[field] = field === 'title' || field === 'description' ? stripHtml(value) : value;
+      }
     });
 
     // Append any newly uploaded images (up to 5 total)
