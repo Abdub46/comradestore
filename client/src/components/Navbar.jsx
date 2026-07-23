@@ -23,7 +23,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-20 bg-white dark:bg-gray-800 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
         <Link to="/" className="text-xl font-bold text-primary-700 dark:text-primary-100">
-          HorizonMarket
+          CampusMarket
         </Link>
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
