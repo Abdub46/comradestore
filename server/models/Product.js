@@ -55,6 +55,9 @@ const productSchema = new mongoose.Schema(
     // to auto-delete the product 2 days after it was marked Sold.
     // Stays null while status is Available/Reserved.
     soldAt: { type: Date, default: null },
+// Tracks whether the 24-hour "please update your status" reminder email
+// has already been sent for the current Sold cycle, so it only fires once.
+reminderSent: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     favoritedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },

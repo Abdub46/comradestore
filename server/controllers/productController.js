@@ -193,10 +193,10 @@ const updateProductStatus = async (req, res, next) => {
       return res.status(403).json({ message: 'You can only update your own listings' });
     }
 
-    product.status = status;
-    // Start (or clear) the 2-day auto-delete timer based on the new status
-    product.soldAt = status === 'Sold' ? new Date() : null;
-    await product.save();
+  product.status = status;
+product.soldAt = status === 'Sold' ? new Date() : null;
+product.reminderSent = false;
+await product.save();
     res.json(product);
   } catch (error) {
     next(error);
@@ -215,10 +215,10 @@ const markAsContactedSold = async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    product.status = 'Sold';
-    // Start the 2-day auto-delete timer
-    product.soldAt = new Date();
-    await product.save();
+ product.status = 'Sold';
+product.soldAt = new Date();
+product.reminderSent = false;
+await product.save();
     res.json(product);
   } catch (error) {
     next(error);
