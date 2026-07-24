@@ -1,3 +1,4 @@
+
 const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -13,10 +14,10 @@ const { generalLimiter } = require('./middleware/security');
 
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
-const mpesaRoutes = require('./routes/mpesaRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cronRoutes = require('./routes/cronRoutes');
+const bannerRoutes = require('./routes/bannerRoutes');
 
 // Fail fast if critical secrets are missing - safer than starting with an
 // insecure default JWT secret
@@ -28,8 +29,6 @@ if (!process.env.JWT_SECRET) {
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
   console.warn('WARNING: EMAIL_USER/EMAIL_PASSWORD not set - the Contact Us form will fail to send.');
 }
-
-
 
 connectDB();
 
@@ -87,11 +86,10 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cron', cronRoutes);
-
+app.use('/api/banner', bannerRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api', (req, res) => {
