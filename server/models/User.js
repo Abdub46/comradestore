@@ -20,10 +20,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       enum: ['Sokomoko', 'KU', 'Annex'],
     },
-    avatar: {
-      type: String,
-      default: 'https://res.cloudinary.com/demo/image/upload/v1/default-avatar.png',
-    },
+  avatar: {
+  type: String,
+  default: '/default-avatar.png',
+},
   },
   { timestamps: true }
 );
