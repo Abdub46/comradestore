@@ -92,28 +92,32 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile dropdown menu - only rendered below the md breakpoint */}
+
+
+     {/* Mobile dropdown menu - only rendered below the md breakpoint */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t dark:border-gray-700 px-4 py-3 flex flex-col gap-3 text-sm font-medium bg-white dark:bg-gray-800">
-          <Link to="/" onClick={closeMobileMenu} className="hover:text-primary-600">Home</Link>
-          <Link to="/search" onClick={closeMobileMenu} className="hover:text-primary-600">Browse</Link>
-          {user && <Link to="/sell" onClick={closeMobileMenu} className="hover:text-primary-600">Sell Item</Link>}
-          {user && <Link to="/dashboard" onClick={closeMobileMenu} className="hover:text-primary-600">Dashboard</Link>}
+        <div className="md:hidden border-t dark:border-gray-700 px-4 py-2 flex flex-col divide-y divide-gray-200 dark:divide-gray-700 text-sm font-medium bg-white dark:bg-gray-800">
+          <Link to="/" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Home</Link>
+          <Link to="/search" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Browse</Link>
+          {user && <Link to="/sell" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Sell Item</Link>}
+          {user && <Link to="/dashboard" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Dashboard</Link>}
 
           {user ? (
             <>
-              <Link to="/profile" onClick={closeMobileMenu} className="hover:text-primary-600">
+              <Link to="/profile" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">
                 {user.firstName} (Profile)
               </Link>
-              <button
-                onClick={handleLogout}
-                className="text-left px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 w-fit"
-              >
-                Logout
-              </button>
+              <div className="py-3">
+                <button
+                  onClick={handleLogout}
+                  className="text-left px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 w-fit"
+                >
+                  Logout
+                </button>
+              </div>
             </>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="py-3 flex items-center gap-2">
               <Link
                 to="/login"
                 onClick={closeMobileMenu}
@@ -132,6 +136,8 @@ export default function Navbar() {
           )}
         </div>
       )}
+
+
     </nav>
   );
 }
