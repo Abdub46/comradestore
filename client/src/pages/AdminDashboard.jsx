@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import Loader from '../components/Loader';
 import { getAllUsers, getSignupStats } from '../services/adminService';
+import { getBanner, updateBanner } from '../services/bannerService';
 import { timeAgo } from '../utils/format';
 
 export default function AdminDashboard() {
@@ -17,6 +18,18 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [bannerForm, setBannerForm] = useState({
+    text: '',
+    linkUrl: '',
+    linkText: '',
+    backgroundColor: '#16a34a',
+    textColor: '#ffffff',
+    showLinkIcon: true,
+    showCloseButton: true,
+  });
+  const [bannerSaving, setBannerSaving] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState('');
 
   useEffect(() => {
     Promise.all([getAllUsers(), getSignupStats()])
@@ -28,7 +41,36 @@ export default function AdminDashboard() {
         setError(err.response?.data?.message || 'Failed to load dashboard data.');
       })
       .finally(() => setLoading(false));
+
+    // Loaded separately - the banner form pre-fills with whatever is
+    // currently saved, but shouldn't block the rest of the dashboard.
+    getBanner()
+      .then((data) => {
+        if (data && Object.keys(data).length > 0) {
+          setBannerForm((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const handleBannerChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setBannerForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleBannerSave = async (e) => {
+    e.preventDefault();
+    setBannerSaving(true);
+    setBannerMessage('');
+    try {
+      await updateBanner(bannerForm);
+      setBannerMessage('Banner settings saved successfully.');
+    } catch (err) {
+      setBannerMessage(err.response?.data?.message || 'Failed to save banner settings.');
+    } finally {
+      setBannerSaving(false);
+    }
+  };
 
   if (loading) return <Loader />;
 
@@ -89,6 +131,108 @@ export default function AdminDashboard() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Banner settings */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mt-8">
+        <h2 className="text-lg font-semibold mb-4">Top Banner Settings</h2>
+
+        {bannerMessage && (
+          <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3">
+            {bannerMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleBannerSave} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Banner Text</label>
+            <input
+              name="text"
+              value={bannerForm.text}
+              onChange={handleBannerChange}
+              placeholder="e.g. Courtesy of Softlife Wireless"
+              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-600"
+            />
+            <p className="text-xs text-gray-400 mt-1">Leave this empty to hide the banner completely.</p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Link URL (optional)</label>
+            <input
+              name="linkUrl"
+              value={bannerForm.linkUrl}
+              onChange={handleBannerChange}
+              placeholder="https://example.com"
+              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-600"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Link Text (optional)</label>
+            <input
+              name="linkText"
+              value={bannerForm.linkText}
+              onChange={handleBannerChange}
+              placeholder="e.g. Learn more"
+              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-600"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium block mb-1">Banner Background Color</label>
+              <input
+                type="color"
+                name="backgroundColor"
+                value={bannerForm.backgroundColor}
+                onChange={handleBannerChange}
+                className="h-10 w-full rounded-md border dark:border-gray-600 cursor-pointer"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium block mb-1">Text Color</label>
+              <input
+                type="color"
+                name="textColor"
+                value={bannerForm.textColor}
+                onChange={handleBannerChange}
+                className="h-10 w-full rounded-md border dark:border-gray-600 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showLinkIcon"
+              name="showLinkIcon"
+              checked={bannerForm.showLinkIcon}
+              onChange={handleBannerChange}
+              className="h-4 w-4"
+            />
+            <label htmlFor="showLinkIcon" className="text-sm font-medium">Show link icon</label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showCloseButton"
+              name="showCloseButton"
+              checked={bannerForm.showCloseButton}
+              onChange={handleBannerChange}
+              className="h-4 w-4"
+            />
+            <label htmlFor="showCloseButton" className="text-sm font-medium">Show close button</label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={bannerSaving}
+            className="bg-primary-600 text-white font-semibold px-5 py-2.5 rounded-md hover:bg-primary-700 disabled:opacity-60"
+          >
+            {bannerSaving ? 'Saving...' : 'Save Banner'}
+          </button>
+        </form>
       </div>
     </div>
   );

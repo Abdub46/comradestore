@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import Banner from './components/Banner';
 import PrivateRoute from './components/PrivateRoute';
 
 import Home from './pages/Home';
@@ -14,7 +15,6 @@ import EditProduct from './pages/EditProduct';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
-
 import Cart from './pages/Cart';
 import ContactUs from './pages/ContactUs';
 import TermsOfService from './pages/TermsOfService';
@@ -23,6 +23,7 @@ import NotFound from './pages/NotFound';
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
+      <Banner />
       <Navbar />
       <main className="flex-1">
         <Routes>
@@ -60,24 +61,23 @@ export default function App() {
             }
           />
           <Route
-  path="/profile"
-  element={
-    <PrivateRoute>
-      <Profile />
-    </PrivateRoute>
-  }
-/>
-<Route
-  path="/admin"
-  element={
-    <PrivateRoute>
-      <AdminDashboard />
-    </PrivateRoute>
-  }
-/>
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
 
-<Route path="*" element={<NotFound />} />
-
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />
