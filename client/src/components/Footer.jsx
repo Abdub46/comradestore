@@ -18,10 +18,19 @@ export default function Footer() {
   return (
     <footer className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 mt-16">
       <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
-        {/* Left: copyright */}
-        <p className="text-center md:text-left whitespace-nowrap">
-          &copy; {new Date().getFullYear()} HorizonSolutions Kenya. All rights reserved.
-        </p>
+
+
+
+     {/* Left: copyright + location */}
+<div className="text-center md:text-left">
+  <p className="whitespace-nowrap">
+    &copy; {new Date().getFullYear()} HorizonSolutions Kenya. All rights reserved.
+  </p>
+
+  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+    📍 Nyandarua, Olkalou, Kenya
+  </p>
+</div>
 
         {/* Center: Contact Us + Terms of Service - each opens in a new tab */}
         <div className="flex items-center gap-4 font-medium">
