@@ -133,18 +133,26 @@ export default function ProductDetail() {
               {isSold ? 'Sold Out' : inCart ? 'Added to Cart' : 'Add to Cart'}
             </button>
           )}
-
-          <a
-            href={buildWhatsAppLink(product.seller.phone, product.title)}
-            target="_blank"
-            rel="noreferrer"
-            onClick={handleContactSeller}
-            className={`flex-1 text-center font-medium py-2.5 rounded-md text-white ${
-              isSold ? 'bg-gray-300 pointer-events-none' : 'bg-green-600 hover:bg-green-700'
-            }`}
-          >
-            Contact Seller on WhatsApp
-          </a>
+          {isOwner ? (
+            <span
+              className="flex-1 text-center font-medium py-2.5 rounded-md text-gray-500 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+              title="You can't contact yourself about your own listing"
+            >
+              Contact Seller on WhatsApp
+            </span>
+          ) : (
+            <a
+              href={buildWhatsAppLink(product.seller.phone, product.title)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={handleContactSeller}
+              className={`flex-1 text-center font-medium py-2.5 rounded-md text-white ${
+                isSold ? 'bg-gray-300 pointer-events-none' : 'bg-green-600 hover:bg-green-700'
+              }`}
+            >
+              Contact Seller on WhatsApp
+            </a>
+          )}
         </div>
 
         {/* Seller card */}
