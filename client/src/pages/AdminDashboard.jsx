@@ -9,7 +9,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Loader from '../components/Loader';
-import { getAllUsers, getSignupStats } from '../services/adminService';
+import {
+  getAllUsers,
+  getSignupStats,
+  getAnalyticsOverview,
+  getHealthStatus,
+} from '../services/adminService';
 import { getBanner, updateBanner } from '../services/bannerService';
 import { timeAgo } from '../utils/format';
 
@@ -30,13 +35,22 @@ export default function AdminDashboard() {
   });
   const [bannerSaving, setBannerSaving] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
+  const [analytics, setAnalytics] = useState(null);
+const [health, setHealth] = useState(null);
+
 
   useEffect(() => {
-    Promise.all([getAllUsers(), getSignupStats()])
-      .then(([usersData, statsData]) => {
-        setUsers(usersData);
-        setStats(statsData);
-      })
+   Promise.all([
+    getAllUsers(),
+    getSignupStats(),
+    getAnalyticsOverview(),
+    getHealthStatus(),
+]).then(([usersData, statsData, analyticsData, healthData]) => {
+    setUsers(usersData);
+    setStats(statsData);
+    setAnalytics(analyticsData);
+    setHealth(healthData);
+})
       .catch((err) => {
         setError(err.response?.data?.message || 'Failed to load dashboard data.');
       })
