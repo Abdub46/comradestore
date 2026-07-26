@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,18 +15,40 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Loader from '../components/Loader';
-import {
-  getAllUsers,
-  getSignupStats,
-  getAnalyticsOverview,
-  getHealthStatus,
-} from '../services/adminService';
+import { getAllUsers, getSignupStats, getAnalyticsOverview, getHealthStatus } from '../services/adminService';
 import { getBanner, updateBanner } from '../services/bannerService';
 import { timeAgo } from '../utils/format';
+
+const DEVICE_COLORS = { Desktop: '#16a34a', Mobile: '#3b82f6', Tablet: '#f59e0b' };
+
+// Small reusable stat card used across the performance section
+function StatCard({ label, value }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-2xl font-bold mt-1">{value}</p>
+    </div>
+  );
+}
+
+// Small status row used in the Website Health card
+function HealthRow({ label, healthy }) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm">{label}</span>
+      <span className="flex items-center gap-1.5 text-sm font-medium">
+        <span className={`h-2.5 w-2.5 rounded-full ${healthy ? 'bg-green-500' : 'bg-red-500'}`} />
+        {healthy ? 'Online' : 'Offline'}
+      </span>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -35,26 +63,22 @@ export default function AdminDashboard() {
   });
   const [bannerSaving, setBannerSaving] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
-  const [analytics, setAnalytics] = useState(null);
-const [health, setHealth] = useState(null);
-
 
   useEffect(() => {
-   Promise.all([
-    getAllUsers(),
-    getSignupStats(),
-    getAnalyticsOverview(),
-    getHealthStatus(),
-]).then(([usersData, statsData, analyticsData, healthData]) => {
-    setUsers(usersData);
-    setStats(statsData);
-    setAnalytics(analyticsData);
-    setHealth(healthData);
-})
+    Promise.all([getAllUsers(), getSignupStats()])
+      .then(([usersData, statsData]) => {
+        setUsers(usersData);
+        setStats(statsData);
+      })
       .catch((err) => {
         setError(err.response?.data?.message || 'Failed to load dashboard data.');
       })
       .finally(() => setLoading(false));
+
+    // Analytics and health are loaded separately - if either fails, the
+    // rest of the dashboard (users, signups, banner) still works fine.
+    getAnalyticsOverview().then(setAnalytics).catch(() => setAnalytics(null));
+    getHealthStatus().then(setHealth).catch(() => setHealth(null));
 
     // Loaded separately - the banner form pre-fills with whatever is
     // currently saved, but shouldn't block the rest of the dashboard.
@@ -98,9 +122,106 @@ const [health, setHealth] = useState(null);
     );
   }
 
+  const performance = analytics?.performance;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+
+      {/* Website Health */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8">
+        <h2 className="text-lg font-semibold mb-2">Website Health</h2>
+        {health ? (
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <HealthRow label="Backend Status" healthy={health.backend} />
+            <HealthRow label="Database" healthy={health.database} />
+            <HealthRow label="Cloudinary" healthy={health.cloudinary} />
+            <HealthRow label="Email Service" healthy={health.email} />
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">Health status unavailable right now.</p>
+        )}
+      </div>
+
+      {/* Performance stat cards */}
+      <h2 className="text-lg font-semibold mb-3">Website Performance</h2>
+      {performance ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          <StatCard label="Visitors Today" value={performance.visitorsToday} />
+          <StatCard label="Visitors This Week" value={performance.visitorsThisWeek} />
+          <StatCard label="Visitors This Month" value={performance.visitorsThisMonth} />
+          <StatCard label="Page Views (This Month)" value={performance.totalPageViews} />
+          <StatCard label="Avg Pages / Session" value={performance.avgPagesPerSession} />
+          <StatCard label="Bounce Rate" value={`${performance.bounceRate}%`} />
+        </div>
+      ) : (
+        <p className="text-gray-500 text-sm mb-8">Performance data unavailable right now.</p>
+      )}
+
+      {/* Daily visitors trend */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8">
+        <h2 className="text-lg font-semibold mb-4">Daily Visitors (Last 14 Days)</h2>
+        {analytics?.dailyTrend?.length > 0 ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={analytics.dailyTrend}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-gray-500 text-sm">No visitor data yet.</p>
+        )}
+      </div>
+
+      {/* Most visited pages + device usage, side by side on larger screens */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-4">Most Visited Pages</h2>
+          {analytics?.topPages?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={analytics.topPages}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="page" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="views" fill="#16a34a" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-500 text-sm">No page view data yet.</p>
+          )}
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-4">Device Usage</h2>
+          {analytics?.devices?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={analytics.devices}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  label
+                >
+                  {analytics.devices.map((entry) => (
+                    <Cell key={entry.name} fill={DEVICE_COLORS[entry.name] || '#9ca3af'} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-500 text-sm">No device data yet.</p>
+          )}
+        </div>
+      </div>
 
       {/* Signup trend graph */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8">
@@ -121,7 +242,7 @@ const [health, setHealth] = useState(null);
       </div>
 
       {/* Users table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 overflow-x-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 overflow-x-auto mb-8">
         <h2 className="text-lg font-semibold mb-4">Registered Users ({users.length})</h2>
         <table className="w-full text-sm text-left">
           <thead>
@@ -148,7 +269,7 @@ const [health, setHealth] = useState(null);
       </div>
 
       {/* Banner settings */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mt-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
         <h2 className="text-lg font-semibold mb-4">Top Banner Settings</h2>
 
         {bannerMessage && (
