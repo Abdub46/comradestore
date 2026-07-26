@@ -1,9 +1,10 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Banner from './components/Banner';
 import PrivateRoute from './components/PrivateRoute';
+import { trackPageView } from './services/analyticsService';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -21,6 +22,12 @@ import TermsOfService from './pages/TermsOfService';
 import NotFound from './pages/NotFound';
 
 export default function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Banner />
