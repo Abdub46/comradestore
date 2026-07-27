@@ -1,7 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Hero from '../components/Hero';
-import SearchBar from '../components/SearchBar';
 import CategoryList from '../components/CategoryList';
 import ProductCard from '../components/ProductCard';
 import ProductCardSkeleton from '../components/ProductCardSkeleton';
@@ -21,7 +20,6 @@ export default function Home() {
   return (
     <div>
       <Hero />
-      <SearchBar />
       <CategoryList />
 
       <div className="max-w-7xl mx-auto px-4 py-6">

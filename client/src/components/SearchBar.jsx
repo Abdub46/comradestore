@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SearchIcon } from './icons';
 
 export default function SearchBar({ initialValue = '' }) {
   const [query, setQuery] = useState(initialValue);
@@ -11,20 +12,22 @@ export default function SearchBar({ initialValue = '' }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto -mt-6 px-4">
-      <div className="flex bg-white dark:bg-gray-800 rounded-full shadow-lg overflow-hidden">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4">
+      <div className="flex items-center bg-white rounded-full shadow-md pl-5 pr-1.5 py-1.5">
+        <SearchIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search products..."
-          className="flex-1 px-5 py-3 bg-transparent outline-none text-sm"
+          placeholder="Search for items, categories..."
+          className="flex-1 px-3 py-2 bg-transparent outline-none text-sm text-gray-900"
         />
         <button
           type="submit"
-          className="px-6 bg-primary-600 text-white font-medium hover:bg-primary-700"
+          aria-label="Search"
+          className="h-11 w-11 flex-shrink-0 rounded-full bg-primary-600 text-white flex items-center justify-center hover:bg-primary-700"
         >
-          Search
+          <SearchIcon className="h-5 w-5" />
         </button>
       </div>
     </form>
