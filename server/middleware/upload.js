@@ -1,19 +1,24 @@
-const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/cloudinary');
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'marketplace-products',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [{ width: 1200, height: 1200, crop: 'limit' }],
-  },
-});
+const multer = require('multer');
+
+// Images are held in memory only long enough for the controller to convert
+// them to WebP (via sharp) and stream the result to Cloudinary - never
+// written to disk. Resizing now happens in processImage.js instead of via
+// a Cloudinary transformation, since sharp handles that before upload.
+const storage = multer.memoryStorage();
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per image
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPG, PNG, and WEBP images are allowed'));
+    }
+  },
 });
 
 module.exports = upload;

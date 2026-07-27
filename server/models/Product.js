@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const CATEGORIES = [
@@ -25,7 +26,7 @@ const productSchema = new mongoose.Schema(
     seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true },
-    category: { type: String, required: true, enum: CATEGORIES },
+    category: { type: String, required: true, enum: CATEGORIES, index: true },
     price: {
       type: Number,
       required: true,
@@ -35,7 +36,7 @@ const productSchema = new mongoose.Schema(
         message: 'Price must be a valid number',
       },
     },
-    condition: { type: String, required: true, enum: ['New', 'Used'] },
+    condition: { type: String, required: true, enum: ['New', 'Used'], index: true },
     images: {
       type: [String],
       validate: [(arr) => arr.length <= 5, 'Maximum 5 images allowed'],
@@ -45,19 +46,21 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ['Sokomoko', 'KU', 'Annex'],
+      index: true,
     },
     status: {
       type: String,
       enum: ['Available', 'Reserved', 'Sold'],
       default: 'Available',
+      index: true,
     },
     // Timestamp of when status became "Sold". Used by the TTL index below
     // to auto-delete the product 2 days after it was marked Sold.
     // Stays null while status is Available/Reserved.
     soldAt: { type: Date, default: null },
-// Tracks whether the 24-hour "please update your status" reminder email
-// has already been sent for the current Sold cycle, so it only fires once.
-reminderSent: { type: Boolean, default: false },
+    // Tracks whether the 24-hour "please update your status" reminder email
+    // has already been sent for the current Sold cycle, so it only fires once.
+    reminderSent: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     favoritedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },

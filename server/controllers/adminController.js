@@ -4,15 +4,29 @@ const PageView = require('../models/PageView');
 const cloudinary = require('../config/cloudinary');
 const transporter = require('../config/mailer');
 
-// @desc    Get every registered user's account details (admin only)
+// @desc    Get registered users' account details, paginated (admin only)
 //          Passwords are never included - the User model's toJSON already
 //          strips the password field automatically on every query.
-// @route   GET /api/admin/users
+// @route   GET /api/admin/users?page=1&limit=20
 // @access  Private/Admin
 const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().sort('-createdAt');
-    res.json(users);
+    const { page = 1, limit = 20 } = req.query;
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.max(1, Number(limit));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [users, total] = await Promise.all([
+      User.find().sort('-createdAt').skip(skip).limit(limitNum),
+      User.countDocuments(),
+    ]);
+
+    res.json({
+      users,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+      totalUsers: total,
+    });
   } catch (error) {
     next(error);
   }

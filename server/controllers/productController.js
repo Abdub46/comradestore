@@ -1,5 +1,8 @@
 const Product = require('../models/Product');
 const { stripHtml } = require('../utils/sanitize');
+const { convertToWebP } = require('../utils/processImage');
+const { uploadBufferToCloudinary } = require('../utils/cloudinaryUpload');
+const { notifyUsersOfNewListing } = require('../jobs/newListingNotifier');
 
 // @desc    Get all products (with search + filters + pagination)
 // @route   GET /api/products
@@ -95,7 +98,14 @@ const createProduct = async (req, res, next) => {
       return res.status(400).json({ message: 'Please fill in all required fields' });
     }
 
-    const images = (req.files || []).map((file) => file.path);
+    // Each uploaded image is converted to WebP (via sharp) before being
+    // uploaded to Cloudinary, shrinking file size with no visible quality loss.
+    const images = await Promise.all(
+      (req.files || []).map(async (file) => {
+        const webpBuffer = await convertToWebP(file.buffer);
+        return uploadBufferToCloudinary(webpBuffer);
+      })
+    );
 
     const product = await Product.create({
       seller: req.user._id,
@@ -107,6 +117,12 @@ const createProduct = async (req, res, next) => {
       residence,
       images,
     });
+
+    // Fire-and-forget: notifies all other users by email that a new item
+    // was listed. Not awaited, so this never delays the seller's response,
+    // and .catch swallows any failure so it can never break listing creation.
+    notifyUsersOfNewListing(product, req.user._id).catch(() => {});
+
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -137,9 +153,15 @@ const updateProduct = async (req, res, next) => {
       }
     });
 
-    // Append any newly uploaded images (up to 5 total)
+    // Append any newly uploaded images (up to 5 total), converting each to
+    // WebP via sharp before uploading, same as createProduct
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map((file) => file.path);
+      const newImages = await Promise.all(
+        req.files.map(async (file) => {
+          const webpBuffer = await convertToWebP(file.buffer);
+          return uploadBufferToCloudinary(webpBuffer);
+        })
+      );
       product.images = [...product.images, ...newImages].slice(0, 5);
     }
 
@@ -193,10 +215,12 @@ const updateProductStatus = async (req, res, next) => {
       return res.status(403).json({ message: 'You can only update your own listings' });
     }
 
-  product.status = status;
-product.soldAt = status === 'Sold' ? new Date() : null;
-product.reminderSent = false;
-await product.save();
+    product.status = status;
+    // Start (or clear) the 2-day auto-delete timer based on the new status
+    product.soldAt = status === 'Sold' ? new Date() : null;
+    // Reset the reminder flag so a fresh Sold cycle gets its own 24-hour reminder
+    product.reminderSent = false;
+    await product.save();
     res.json(product);
   } catch (error) {
     next(error);
@@ -215,10 +239,12 @@ const markAsContactedSold = async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
- product.status = 'Sold';
-product.soldAt = new Date();
-product.reminderSent = false;
-await product.save();
+    product.status = 'Sold';
+    // Start the 2-day auto-delete timer
+    product.soldAt = new Date();
+    // Reset the reminder flag so this fresh Sold cycle gets its own 24-hour reminder
+    product.reminderSent = false;
+    await product.save();
     res.json(product);
   } catch (error) {
     next(error);
