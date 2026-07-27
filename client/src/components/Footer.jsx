@@ -24,7 +24,7 @@ export default function Footer() {
      {/* Left: copyright + location */}
 <div className="text-center md:text-left">
   <p className="whitespace-nowrap">
-    &copy; {new Date().getFullYear()} HorizonSolutions Kenya. All rights reserved.
+    &copy; {new Date().getFullYear()} Horizon Studio | Kenya. All rights reserved.
   </p>
 
   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

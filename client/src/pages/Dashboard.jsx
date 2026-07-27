@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Loader from '../components/Loader';
 import { getMyListings, deleteProduct, updateProductStatus } from '../services/productService';
 import { formatKsh, timeAgo } from '../utils/format';
@@ -11,30 +12,36 @@ const STATUS_STYLES = {
 };
 
 export default function Dashboard() {
-  const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchListings = () => {
-    setLoading(true);
-    getMyListings()
-      .then(setListings)
-      .finally(() => setLoading(false));
+  const { data: listings = [], isLoading } = useQuery({
+    queryKey: ['myListings'],
+    queryFn: getMyListings,
+  });
+
+  // Both mutations invalidate ['myListings'] on success, which triggers an
+  // automatic refetch - this replaces the old fetchListings() call that had
+  // to be manually invoked after every status change and delete.
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }) => updateProductStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['myListings'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteProduct(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['myListings'] }),
+  });
+
+  const handleStatusChange = (id, status) => {
+    statusMutation.mutate({ id, status });
   };
 
-  useEffect(fetchListings, []);
-
-  const handleStatusChange = async (id, status) => {
-    await updateProductStatus(id, status);
-    fetchListings();
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (!window.confirm('Delete this listing? This cannot be undone.')) return;
-    await deleteProduct(id);
-    fetchListings();
+    deleteMutation.mutate(id);
   };
 
-  if (loading) return <Loader />;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -60,6 +67,7 @@ export default function Dashboard() {
               <img
                 src={product.images[0] || ''}
                 alt={product.title}
+                loading="lazy"
                 className="h-20 w-20 rounded-md object-cover bg-gray-100 dark:bg-gray-700"
               />
 
@@ -108,3 +116,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

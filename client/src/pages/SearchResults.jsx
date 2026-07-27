@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+
+import React from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import ProductCard from '../components/ProductCard';
-import Loader from '../components/Loader';
+import ProductCardSkeleton from '../components/ProductCardSkeleton';
 import { getProducts, CATEGORIES } from '../services/productService';
 import { useCart } from '../contexts/CartContext';
 
 export default function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [data, setData] = useState({ products: [], page: 1, totalPages: 1, totalResults: 0 });
-  const [loading, setLoading] = useState(true);
   const { addToCart, isInCart } = useCart();
 
   const filters = {
@@ -21,18 +21,20 @@ export default function SearchResults() {
     page: searchParams.get('page') || '1',
   };
 
-  const fetchProducts = useCallback(() => {
-    setLoading(true);
-    const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
-    getProducts(params)
-      .then(setData)
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  // Each unique combination of filters gets its own cache entry via the
+  // query key, so switching between two filter combos you've already
+  // visited shows results instantly instead of refetching. keepPreviousData
+  // means changing page/filters shows the previous results (dimmed slightly
+  // below) while the new page loads, instead of flashing back to skeletons.
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    queryKey: ['products', params],
+    queryFn: () => getProducts(params),
+    placeholderData: keepPreviousData,
+  });
+
+  const results = data || { products: [], page: 1, totalPages: 1, totalResults: 0 };
 
   const updateFilter = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -139,16 +141,24 @@ export default function SearchResults() {
 
       {/* Results */}
       <div className="md:col-span-3">
-        <p className="text-sm text-gray-500 mb-4">{data.totalResults} results found</p>
+        <p className="text-sm text-gray-500 mb-4">{results.totalResults} results found</p>
 
-        {loading ? (
-          <Loader />
-        ) : data.products.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : results.products.length === 0 ? (
           <p className="text-gray-500">No products match your filters.</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {data.products.map((product) => (
+            <div
+              className={`grid grid-cols-2 sm:grid-cols-3 gap-4 transition-opacity ${
+                isPlaceholderData ? 'opacity-60' : 'opacity-100'
+              }`}
+            >
+              {results.products.map((product) => (
                 <ProductCard
                   key={product._id}
                   product={product}
@@ -158,14 +168,14 @@ export default function SearchResults() {
               ))}
             </div>
 
-            {data.totalPages > 1 && (
+            {results.totalPages > 1 && (
               <div className="flex flex-wrap justify-center gap-2 mt-8">
-                {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
+                {Array.from({ length: results.totalPages }, (_, i) => i + 1).map((p) => (
                   <button
                     key={p}
                     onClick={() => goToPage(p)}
                     className={`h-9 w-9 rounded-md text-sm ${
-                      p === data.page
+                      p === results.page
                         ? 'bg-primary-600 text-white'
                         : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}

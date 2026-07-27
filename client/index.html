@@ -3,11 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HorizonStore</title>
-     <link rel="manifest" href="/manifest.json" />
+    <title>Household Marketplace</title>
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <meta name="theme-color" content="#16a34a" />
+
+    <!-- Poppins - preconnect speeds up the DNS/TLS handshake before the
+         font request even starts; fetchpriority tells the browser this is
+         important for the page to look right immediately (avoids a flash
+         of unstyled/fallback text); display=swap means text renders in the
+         fallback font instantly rather than staying invisible while the
+         real font downloads. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+      fetchpriority="high"
+    />
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { sendContactMessage } from '../services/contactService';
 import { isValidEmailFormat, isPlausiblePhone } from '../utils/validators';
 
@@ -114,13 +115,14 @@ export default function ContactUs() {
           {fieldErrors.message && <p className="text-xs text-red-600 mt-1">{fieldErrors.message}</p>}
         </div>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           type="submit"
           disabled={loading}
           className="w-full bg-primary-600 text-white font-semibold py-2.5 rounded-md hover:bg-primary-700 disabled:opacity-60"
         >
           {loading ? 'Sending...' : 'Send Message'}
-        </button>
+        </motion.button>
       </form>
     </div>
   );

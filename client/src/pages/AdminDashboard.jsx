@@ -46,6 +46,9 @@ function HealthRow({ label, healthy }) {
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [usersPage, setUsersPage] = useState(1);
+  const [totalUserPages, setTotalUserPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [stats, setStats] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [health, setHealth] = useState(null);
@@ -64,16 +67,28 @@ export default function AdminDashboard() {
   const [bannerSaving, setBannerSaving] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
 
+  // Users are paginated (20 per page), so this refetches whenever the
+  // admin clicks Previous/Next - kept separate from the one-time effect
+  // below so switching pages doesn't re-fetch signups/analytics/health.
   useEffect(() => {
-    Promise.all([getAllUsers(), getSignupStats()])
-      .then(([usersData, statsData]) => {
-        setUsers(usersData);
-        setStats(statsData);
+    getAllUsers({ page: usersPage, limit: 20 })
+      .then((data) => {
+        setUsers(data.users);
+        setTotalUserPages(data.totalPages);
+        setTotalUsers(data.totalUsers);
       })
       .catch((err) => {
         setError(err.response?.data?.message || 'Failed to load dashboard data.');
       })
       .finally(() => setLoading(false));
+  }, [usersPage]);
+
+  useEffect(() => {
+    getSignupStats()
+      .then(setStats)
+      .catch((err) => {
+        setError(err.response?.data?.message || 'Failed to load dashboard data.');
+      });
 
     // Analytics and health are loaded separately - if either fails, the
     // rest of the dashboard (users, signups, banner) still works fine.
@@ -243,7 +258,7 @@ export default function AdminDashboard() {
 
       {/* Users table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 overflow-x-auto mb-8">
-        <h2 className="text-lg font-semibold mb-4">Registered Users ({users.length})</h2>
+        <h2 className="text-lg font-semibold mb-4">Registered Users ({totalUsers})</h2>
         <table className="w-full text-sm text-left">
           <thead>
             <tr className="border-b dark:border-gray-700 text-gray-500 dark:text-gray-400">
@@ -266,6 +281,28 @@ export default function AdminDashboard() {
             ))}
           </tbody>
         </table>
+
+        {totalUserPages > 1 && (
+          <div className="flex items-center justify-between mt-4 text-sm">
+            <button
+              onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+              disabled={usersPage === 1}
+              className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-gray-500 dark:text-gray-400">
+              Page {usersPage} of {totalUserPages}
+            </span>
+            <button
+              onClick={() => setUsersPage((p) => Math.min(totalUserPages, p + 1))}
+              disabled={usersPage === totalUserPages}
+              className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Banner settings */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -92,52 +93,58 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile dropdown menu - only rendered below the md breakpoint */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden border-t dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800"
+          >
+            <div className="px-4 py-2 flex flex-col divide-y divide-gray-200 dark:divide-gray-700 text-sm font-medium">
+              <Link to="/" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Home</Link>
+              <Link to="/search" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Browse</Link>
+              {user && <Link to="/sell" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Sell Item</Link>}
+              {user && <Link to="/dashboard" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Dashboard</Link>}
 
-
-     {/* Mobile dropdown menu - only rendered below the md breakpoint */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t dark:border-gray-700 px-4 py-2 flex flex-col divide-y divide-gray-200 dark:divide-gray-700 text-sm font-medium bg-white dark:bg-gray-800">
-          <Link to="/" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Home</Link>
-          <Link to="/search" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Browse</Link>
-          {user && <Link to="/sell" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Sell Item</Link>}
-          {user && <Link to="/dashboard" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Dashboard</Link>}
-
-          {user ? (
-            <>
-              <Link to="/profile" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">
-                {user.firstName} (Profile)
-              </Link>
-              <div className="py-3">
-                <button
-                  onClick={handleLogout}
-                  className="text-left px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 w-fit"
-                >
-                  Logout
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="py-3 flex items-center gap-2">
-              <Link
-                to="/login"
-                onClick={closeMobileMenu}
-                className="px-3 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                onClick={closeMobileMenu}
-                className="px-3 py-1.5 rounded-md bg-primary-600 text-white hover:bg-primary-700"
-              >
-                Sign Up
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/profile" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">
+                    {user.firstName} (Profile)
+                  </Link>
+                  <div className="py-3">
+                    <button
+                      onClick={handleLogout}
+                      className="text-left px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 w-fit"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="py-3 flex items-center gap-2">
+                  <Link
+                    to="/login"
+                    onClick={closeMobileMenu}
+                    className="px-3 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={closeMobileMenu}
+                    className="px-3 py-1.5 rounded-md bg-primary-600 text-white hover:bg-primary-700"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
-
-
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

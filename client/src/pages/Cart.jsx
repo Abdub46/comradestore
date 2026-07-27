@@ -36,6 +36,7 @@ export default function Cart() {
             <img
               src={product.images[0] || ''}
               alt={product.title}
+              loading="lazy"
               className="h-16 w-16 rounded-md object-cover bg-gray-100 dark:bg-gray-700"
             />
             <div className="flex-1">
@@ -46,13 +47,13 @@ export default function Cart() {
                 {formatKsh(product.price)}
               </p>
             </div>
-            <a>
+            <a
               href={buildWhatsAppLink(product.seller.phone, product.title)}
               target="_blank"
               rel="noreferrer"
               onClick={() => markAsContacted(product._id).catch((err) => console.error(err))}
               className="text-sm px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700"
-            
+            >
               Contact Seller
             </a>
             <button

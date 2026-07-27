@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Loader from '../components/Loader';
 import { getProductById, markAsContacted, deleteProduct } from '../services/productService';
 import { useCart } from '../contexts/CartContext';
@@ -16,20 +17,29 @@ const STATUS_STYLES = {
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
+  const queryClient = useQueryClient();
   const [activeImage, setActiveImage] = useState(0);
-  const [loading, setLoading] = useState(true);
   const { addToCart, isInCart } = useCart();
   const { user } = useAuth();
 
-  useEffect(() => {
-    setLoading(true);
-    getProductById(id)
-      .then(setProduct)
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { data: product, isLoading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => getProductById(id),
+  });
 
-  if (loading) return <Loader />;
+  // Invalidates the seller's Dashboard list and the public product lists,
+  // so a deleted listing doesn't linger in any cached page the next time
+  // someone visits it.
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteProduct(product._id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myListings'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      navigate('/dashboard');
+    },
+  });
+
+  if (isLoading) return <Loader />;
   if (!product) return <p className="text-center py-20">Product not found.</p>;
 
   const isSold = product.status === 'Sold';
@@ -37,21 +47,21 @@ export default function ProductDetail() {
   const isOwner = Boolean(user && product.seller && user._id === product.seller._id);
 
   // Clicking "Contact Seller" opens WhatsApp in a new tab (target="_blank"),
-  // so this tab stays open and this request still completes in the background.
+  // so this tab stays open and this request still completes in the
+  // background. Updates the cached product directly via setQueryData
+  // instead of separate component state, so the cache and the screen can
+  // never disagree with each other.
   const handleContactSeller = () => {
     markAsContacted(product._id)
-      .then(() => setProduct((prev) => ({ ...prev, status: 'Sold' })))
+      .then(() => {
+        queryClient.setQueryData(['product', id], (old) => (old ? { ...old, status: 'Sold' } : old));
+      })
       .catch((err) => console.error('Failed to update product status:', err));
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!window.confirm('Delete this listing? This cannot be undone.')) return;
-    try {
-      await deleteProduct(product._id);
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Failed to delete product:', err);
-    }
+    deleteMutation.mutate();
   };
 
   return (
@@ -79,7 +89,7 @@ export default function ProductDetail() {
                   i === activeImage ? 'border-primary-600' : 'border-transparent'
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -163,6 +173,7 @@ export default function ProductDetail() {
           <img
             src={product.seller.avatar}
             alt={product.seller.firstName}
+            loading="lazy"
             className="h-12 w-12 rounded-full object-cover"
           />
           <div>

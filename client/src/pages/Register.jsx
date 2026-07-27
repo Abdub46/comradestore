@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { notBlank, isValidEmail } from '../utils/validators';
 import { isValidKenyanPhone } from '../utils/phone';
-
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Register() {
   const { register: doRegister } = useAuth();
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -51,10 +48,10 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
             <label className="text-sm font-medium">First Name</label>
             <input
               {...register('firstName', {
-              required: 'First name is required',
-              minLength: { value: 2, message: 'Must be at least 2 characters' },
-              validate: notBlank,
-})}
+                required: 'First name is required',
+                minLength: { value: 2, message: 'Must be at least 2 characters' },
+                validate: notBlank,
+              })}
               className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
             />
             {errors.firstName && <p className="text-xs text-red-600 mt-1">{errors.firstName.message}</p>}
@@ -63,10 +60,10 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
             <label className="text-sm font-medium">Last Name</label>
             <input
               {...register('lastName', {
-              required: 'Last name is required',
-              minLength: { value: 2, message: 'Must be at least 2 characters' },
-              validate: notBlank,
-            })}
+                required: 'Last name is required',
+                minLength: { value: 2, message: 'Must be at least 2 characters' },
+                validate: notBlank,
+              })}
               className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
             />
             {errors.lastName && <p className="text-xs text-red-600 mt-1">{errors.lastName.message}</p>}
@@ -88,9 +85,9 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
           <input
             placeholder="0712345678 or +254712345678"
             {...register('phone', {
-            required: 'Phone number is required',
-            validate: (value) => isValidKenyanPhone(value) || 'Please enter a valid Kenyan phone number',
-          })}
+              required: 'Phone number is required',
+              validate: (value) => isValidKenyanPhone(value) || 'Please enter a valid Kenyan phone number',
+            })}
             className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
           />
           {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone.message}</p>}
@@ -112,66 +109,37 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
         <div>
           <label className="text-sm font-medium">Password</label>
-
-         <div className="relative">
-  <input
-    type={showPassword ? "text" : "password"}
-    {...register("password", {
-      required: "Password is required",
-      minLength: 6,
-    })}
-    className="w-full pr-10"
-  />
-
-  <button
-    type="button"
-    onClick={() => setShowPassword(!showPassword)}
-    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
-  >
-    {showPassword ? <FaEyeSlash /> : <FaEye />}
-  </button>
-</div>
-
-
+          <input
+            type="password"
+            {...register('password', { required: 'Password is required', minLength: 6 })}
+            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+          />
           {errors.password && <p className="text-xs text-red-600 mt-1">Minimum 6 characters</p>}
         </div>
 
         <div>
           <label className="text-sm font-medium">Confirm Password</label>
-
-
-        <div className="relative">
-  <input
-    type={showConfirmPassword ? "text" : "password"}
-    {...register("confirmPassword", {
-      validate: (val) =>
-        val === watch("password") || "Passwords do not match",
-    })}
-    className="w-full pr-10"
-  />
-
-  <button
-    type="button"
-    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
-  >
-    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-  </button>
-</div>
-
-
+          <input
+            type="password"
+            {...register('confirmPassword', {
+              required: true,
+              validate: (val) => val === watch('password') || 'Passwords do not match',
+            })}
+            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+          />
           {errors.confirmPassword && (
             <p className="text-xs text-red-600 mt-1">{errors.confirmPassword.message}</p>
           )}
         </div>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           type="submit"
           disabled={submitting}
           className="w-full bg-primary-600 text-white font-semibold py-2.5 rounded-md hover:bg-primary-700 disabled:opacity-60"
         >
           {submitting ? 'Creating account...' : 'Sign Up'}
-        </button>
+        </motion.button>
       </form>
 
       <p className="text-sm text-center mt-4">
