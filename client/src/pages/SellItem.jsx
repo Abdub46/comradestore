@@ -131,6 +131,38 @@ export default function SellItem() {
           </div>
         </div>
 
+
+
+        <div>
+  <label className="text-sm font-medium">Discount % (optional)</label>
+  <input
+    type="number"
+    placeholder="e.g. 10"
+    {...register('discount', {
+      min: {
+        value: 0,
+        message: 'Discount cannot be negative',
+      },
+      max: {
+        value: 100,
+        message: 'Discount cannot exceed 100%',
+      },
+    })}
+    className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
+  />
+  <p className="text-xs text-gray-500 mt-1">
+    Leave blank if this item isn't discounted.
+  </p>
+  {errors.discount && (
+    <p className="text-xs text-red-600 mt-1">
+      {errors.discount.message}
+    </p>
+  )}
+</div>
+
+
+
+
         <div>
           <label className="text-sm font-medium">Residence</label>
           <select
@@ -144,6 +176,8 @@ export default function SellItem() {
           </select>
           {errors.residence && <p className="text-xs text-red-600 mt-1">Residence is required</p>}
         </div>
+
+
 
         <div>
           <label className="text-sm font-medium">Images (up to 5)</label>

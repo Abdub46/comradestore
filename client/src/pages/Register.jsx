@@ -11,6 +11,8 @@ export default function Register() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -107,30 +109,73 @@ export default function Register() {
           {errors.residence && <p className="text-xs text-red-600 mt-1">{errors.residence.message}</p>}
         </div>
 
-        <div>
-          <label className="text-sm font-medium">Password</label>
-          <input
-            type="password"
-            {...register('password', { required: 'Password is required', minLength: 6 })}
-            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-          />
-          {errors.password && <p className="text-xs text-red-600 mt-1">Minimum 6 characters</p>}
-        </div>
 
-        <div>
-          <label className="text-sm font-medium">Confirm Password</label>
-          <input
-            type="password"
-            {...register('confirmPassword', {
-              required: true,
-              validate: (val) => val === watch('password') || 'Passwords do not match',
-            })}
-            className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-600"
-          />
-          {errors.confirmPassword && (
-            <p className="text-xs text-red-600 mt-1">{errors.confirmPassword.message}</p>
-          )}
-        </div>
+
+       <div>
+  <label className="text-sm font-medium">Password</label>
+
+  <div className="relative mt-1">
+    <input
+      type={showPassword ? 'text' : 'password'}
+      {...register('password', {
+        required: 'Password is required',
+        minLength: 6,
+      })}
+      className="w-full border rounded-md px-3 py-2 pr-16 bg-white dark:bg-gray-800 dark:border-gray-600"
+    />
+
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 hover:text-blue-800"
+    >
+      {showPassword ? 'Hide' : 'Show'}
+    </button>
+  </div>
+
+  {errors.password && (
+    <p className="text-xs text-red-600 mt-1">
+      Minimum 6 characters
+    </p>
+  )}
+</div>
+
+
+
+
+
+      <div>
+  <label className="text-sm font-medium">Confirm Password</label>
+
+  <div className="relative mt-1">
+    <input
+      type={showConfirmPassword ? 'text' : 'password'}
+      {...register('confirmPassword', {
+        required: true,
+        validate: (val) =>
+          val === watch('password') || 'Passwords do not match',
+      })}
+      className="w-full border rounded-md px-3 py-2 pr-16 bg-white dark:bg-gray-800 dark:border-gray-600"
+    />
+
+    <button
+      type="button"
+      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 hover:text-blue-800"
+    >
+      {showConfirmPassword ? 'Hide' : 'Show'}
+    </button>
+  </div>
+
+  {errors.confirmPassword && (
+    <p className="text-xs text-red-600 mt-1">
+      {errors.confirmPassword.message}
+    </p>
+  )}
+</div>
+
+
+
 
         <motion.button
           whileTap={{ scale: 0.97 }}

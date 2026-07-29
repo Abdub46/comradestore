@@ -2,49 +2,44 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Hero from '../components/Hero';
 import CategoryList from '../components/CategoryList';
-import ProductCard from '../components/ProductCard';
-import ProductCardSkeleton from '../components/ProductCardSkeleton';
+import ProductRow from '../components/ProductRow';
 import { getProducts } from '../services/productService';
-import { useCart } from '../contexts/CartContext';
 
 export default function Home() {
-  const { addToCart, isInCart } = useCart();
+  // "Featured" isn't a manually-curated flag in the database - it's
+  // defined here as the most-viewed listings, which is real data rather
+  // than something fabricated to fill the section.
+  const { data: featuredData, isLoading: featuredLoading } = useQuery({
+  queryKey: ['products', { limit: 8, featured: true }],
+  queryFn: () => getProducts({ limit: 8 }),
+});
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['products', 'latest'],
-    queryFn: () => getProducts({ limit: 8, sort: '-createdAt' }),
-  });
-
-  const latest = data?.products || [];
+  const { data: recentData, isLoading: recentLoading } = useQuery({
+  queryKey: ['products', { sort: '-createdAt', limit: 8, recent: true }],
+  queryFn: () =>
+    getProducts({
+      limit: 8,
+      sort: '-createdAt',
+      maxAgeDays: 2,
+    }),
+});
 
   return (
     <div>
       <Hero />
       <CategoryList />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <h2 className="text-xl font-semibold mb-4">Latest Listings</h2>
-        {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : latest.length === 0 ? (
-          <p className="text-gray-500">No listings yet. Be the first to sell an item!</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {latest.map((product) => (
-              <ProductCard
-                key={product._id}
-                product={product}
-                onAddToCart={addToCart}
-                inCart={isInCart(product._id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ProductRow
+        title="Featured Listings"
+        products={featuredData?.products || []}
+        isLoading={featuredLoading}
+      />
+
+      <ProductRow
+        title="Recently Added"
+        products={recentData?.products || []}
+        isLoading={recentLoading}
+      />
     </div>
   );
 }
