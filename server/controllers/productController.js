@@ -18,6 +18,7 @@ const getProducts = async (req, res, next) => {
       status,
       minPrice,
       maxPrice,
+      maxAgeDays,
       page = 1,
       limit = 12,
       sort = '-createdAt',
@@ -41,6 +42,16 @@ const getProducts = async (req, res, next) => {
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
+
+    if (maxAgeDays) {
+  const since = new Date(Date.now() - Number(maxAgeDays) * 24 * 60 * 60 * 1000);
+  filter.createdAt = { $gte: since };
+}
+
+
+
+
+
 
     const pageNum = Math.max(1, Number(page));
     const limitNum = Math.max(1, Number(limit));
@@ -92,7 +103,7 @@ const getProductById = async (req, res, next) => {
 // @access  Private
 const createProduct = async (req, res, next) => {
   try {
-    const { title, description, category, price, condition, residence } = req.body;
+    const { title, description, category, price, condition, residence, discount } = req.body;
 
     if (!title || !description || !category || !price || !condition || !residence) {
       return res.status(400).json({ message: 'Please fill in all required fields' });
@@ -108,15 +119,19 @@ const createProduct = async (req, res, next) => {
     );
 
     const product = await Product.create({
-      seller: req.user._id,
-      title: stripHtml(title),
-      description: stripHtml(description),
-      category,
-      price,
-      condition,
-      residence,
-      images,
-    });
+  seller: req.user._id,
+  title: stripHtml(title),
+  description: stripHtml(description),
+  category,
+  price,
+  condition,
+  residence,
+  discount:
+    discount !== undefined && discount !== ''
+      ? Number(discount)
+      : 0,
+  images,
+});
 
     // Fire-and-forget: notifies all other users by email that a new item
     // was listed. Not awaited, so this never delays the seller's response,
@@ -144,14 +159,22 @@ const updateProduct = async (req, res, next) => {
       return res.status(403).json({ message: 'You can only edit your own listings' });
     }
 
-    const fields = ['title', 'description', 'category', 'price', 'condition', 'residence'];
+    const fields = ['title', 'description', 'category', 'price', 'condition', 'residence', 'discount' ];
     fields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        const value = req.body[field];
-        // title/description are free text - strip any HTML/scripts before saving
-        product[field] = field === 'title' || field === 'description' ? stripHtml(value) : value;
-      }
-    });
+  if (req.body[field] !== undefined) {
+    let value = req.body[field];
+
+    if (field === 'discount') {
+      value = value === '' ? 0 : Number(value);
+    }
+
+    // title/description are free text - strip any HTML/scripts before saving
+    product[field] =
+      field === 'title' || field === 'description'
+        ? stripHtml(value)
+        : value;
+  }
+});
 
     // Append any newly uploaded images (up to 5 total), converting each to
     // WebP via sharp before uploading, same as createProduct

@@ -63,6 +63,14 @@ const productSchema = new mongoose.Schema(
     reminderSent: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
     favoritedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+
+    discount: {
+  type: Number,
+  default: 0,
+  min: [0, 'Discount cannot be negative'],
+  max: [100, 'Discount cannot exceed 100%'],
+},
   },
   { timestamps: true }
 );
