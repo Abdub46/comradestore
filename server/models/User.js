@@ -12,7 +12,14 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    password: { type: String, required: true, minlength: 6 },
+    password: {
+  type: String,
+  minlength: 6,
+  required: function () {
+    return !this.googleId; // password not needed for Google-signed-in users
+  },
+},
+googleId: { type: String, unique: true, sparse: true },
     // Stored in normalized WhatsApp format e.g. 254712345678
     phone: { type: String, required: true, unique: true },
     residence: {
@@ -30,13 +37,14 @@ const userSchema = new mongoose.Schema(
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password') || !this.password) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) return false; // Google-only account, no password to match
   return bcrypt.compare(enteredPassword, this.password);
 };
 

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const verifyGoogleToken = require('../utils/verifyGoogleToken');
 const { formatPhoneNumber, isValidKenyanPhone } = require('../utils/phoneFormatter');
 
 // @desc    Register a new user
@@ -129,4 +130,71 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getProfile, updateProfile };
+// @desc    Log in or sign up with Google
+// @route   POST /api/auth/google
+// @access  Public
+const googleAuth = async (req, res, next) => {
+  try {
+    const { credential, phone, residence } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ message: 'Missing Google credential' });
+    }
+
+    const googleProfile = await verifyGoogleToken(credential);
+
+    let user = await User.findOne({
+      $or: [{ googleId: googleProfile.googleId }, { email: googleProfile.email }],
+    });
+
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleProfile.googleId;
+        await user.save();
+      }
+      return res.json({ user, token: generateToken(user._id) });
+    }
+
+    if (!phone || !residence) {
+      return res.json({
+        needsProfile: true,
+        profile: {
+          email: googleProfile.email,
+          firstName: googleProfile.firstName,
+          lastName: googleProfile.lastName,
+          avatar: googleProfile.avatar,
+        },
+      });
+    }
+
+    if (!isValidKenyanPhone(phone)) {
+      return res.status(400).json({ message: 'Please enter a valid WhatsApp phone number' });
+    }
+
+    if (!['Sokomoko', 'KU', 'Annex'].includes(residence)) {
+      return res.status(400).json({ message: 'Please select a valid residence' });
+    }
+
+    const normalizedPhone = formatPhoneNumber(phone);
+    const phoneExists = await User.findOne({ phone: normalizedPhone });
+    if (phoneExists) {
+      return res.status(400).json({ message: 'An account with that phone number already exists' });
+    }
+
+    user = await User.create({
+      firstName: googleProfile.firstName,
+      lastName: googleProfile.lastName,
+      email: googleProfile.email,
+      googleId: googleProfile.googleId,
+      phone: normalizedPhone,
+      residence,
+      avatar: googleProfile.avatar,
+    });
+
+    res.status(201).json({ user, token: generateToken(user._id) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { registerUser, loginUser, getProfile, updateProfile, googleAuth };
