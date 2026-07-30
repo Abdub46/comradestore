@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema(
   },
 },
 googleId: { type: String, unique: true, sparse: true },
+resetPasswordToken: { type: String, select: false },
+resetPasswordExpires: { type: Date, select: false },
     // Stored in normalized WhatsApp format e.g. 254712345678
     phone: { type: String, required: true, unique: true },
     residence: {

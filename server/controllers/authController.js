@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const verifyGoogleToken = require('../utils/verifyGoogleToken');
+const transporter = require('../config/mailer');
 const { formatPhoneNumber, isValidKenyanPhone } = require('../utils/phoneFormatter');
 
 // @desc    Register a new user
@@ -197,4 +199,98 @@ const googleAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getProfile, updateProfile, googleAuth };
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide your email address' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    const genericResponse = {
+      message: 'If an account with that email exists, we\'ve sent a password reset link.',
+    };
+
+    if (!user) return res.json(genericResponse);
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
+    await user.save({ validateBeforeSave: false });
+
+    const siteUrl = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
+    const resetUrl = `${siteUrl}/reset-password/${rawToken}`;
+
+    try {
+      await transporter.sendMail({
+        from: `"ComradeMarket" <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: 'Reset your ComradeMarket password',
+        text: `We received a request to reset your password. Click this link to choose a new one (expires in 1 hour): ${resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`,
+        html: `
+          <h3>Reset your password</h3>
+          <p>We received a request to reset your ComradeMarket password.</p>
+          <p><a href="${resetUrl}">Click here to choose a new password</a> (this link expires in 1 hour).</p>
+          <p>If you didn't request this, you can safely ignore this email.</p>
+        `,
+      });
+    } catch (emailError) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      console.error('Password reset email error:', emailError.message);
+      return res.status(500).json({ message: 'Could not send reset email. Please try again later.' });
+    }
+
+    res.json(genericResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+
+    if (!password || !confirmPassword) {
+      return res.status(400).json({ message: 'Please fill in both password fields' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    }).select('+resetPasswordToken +resetPasswordExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'This reset link is invalid or has expired' });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ user, token: generateToken(user._id) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateProfile,
+  googleAuth,
+  forgotPassword,
+  resetPassword,
+};

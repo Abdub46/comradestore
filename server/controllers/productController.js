@@ -3,6 +3,15 @@ const { stripHtml } = require('../utils/sanitize');
 const { convertToWebP } = require('../utils/processImage');
 const { uploadBufferToCloudinary } = require('../utils/cloudinaryUpload');
 const { notifyUsersOfNewListing } = require('../jobs/newListingNotifier');
+const {
+  cacheGet,
+  cacheSet,
+  cacheDel,
+  getProductsListVersion,
+  bumpProductsListVersion,
+  DEFAULT_TTL_SECONDS,
+  PRODUCT_TTL_SECONDS,
+} = require('../utils/cache');
 
 // @desc    Get all products (with search + filters + pagination)
 // @route   GET /api/products
@@ -57,6 +66,14 @@ const getProducts = async (req, res, next) => {
     const limitNum = Math.max(1, Number(limit));
     const skip = (pageNum - 1) * limitNum;
 
+    const version = await getProductsListVersion();
+    const cacheKey = `products:list:v${version}:${JSON.stringify(req.query)}`;
+
+    const cached = await cacheGet(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const [products, total] = await Promise.all([
       Product.find(filter)
         .populate('seller', 'firstName lastName phone avatar residence createdAt')
@@ -66,12 +83,17 @@ const getProducts = async (req, res, next) => {
       Product.countDocuments(filter),
     ]);
 
-    res.json({
+    const payload = {
       products,
       page: pageNum,
       totalPages: Math.ceil(total / limitNum),
       totalResults: total,
-    });
+    };
+
+    await cacheSet(cacheKey, payload, DEFAULT_TTL_SECONDS);
+
+    res.json(payload);
+
   } catch (error) {
     next(error);
   }
@@ -82,21 +104,32 @@ const getProducts = async (req, res, next) => {
 // @access  Public
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { views: 1 } },
-      { new: true }
-    ).populate('seller', 'firstName lastName phone avatar residence createdAt');
+    const cacheKey = `product:${req.params.id}`;
+
+    let product = await cacheGet(cacheKey);
 
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      product = await Product.findById(req.params.id).populate(
+        'seller',
+        'firstName lastName phone avatar residence createdAt'
+      );
+
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
+      await cacheSet(cacheKey, product, PRODUCT_TTL_SECONDS);
     }
+
+    Product.updateOne({ _id: req.params.id }, { $inc: { views: 1 } }).catch(() => {});
 
     res.json(product);
   } catch (error) {
     next(error);
   }
 };
+
+
 
 // @desc    Create a product listing
 // @route   POST /api/products
@@ -132,6 +165,8 @@ const createProduct = async (req, res, next) => {
       : 0,
   images,
 });
+
+await bumpProductsListVersion();
 
     // Fire-and-forget: notifies all other users by email that a new item
     // was listed. Not awaited, so this never delays the seller's response,
@@ -189,6 +224,9 @@ const updateProduct = async (req, res, next) => {
     }
 
     const updated = await product.save();
+
+    await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+
     res.json(updated);
   } catch (error) {
     next(error);
@@ -210,7 +248,10 @@ const deleteProduct = async (req, res, next) => {
       return res.status(403).json({ message: 'You can only delete your own listings' });
     }
 
-    await product.deleteOne();
+   await product.deleteOne();
+
+    await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+
     res.json({ message: 'Product removed' });
   } catch (error) {
     next(error);
@@ -242,8 +283,11 @@ const updateProductStatus = async (req, res, next) => {
     // Start (or clear) the 2-day auto-delete timer based on the new status
     product.soldAt = status === 'Sold' ? new Date() : null;
     // Reset the reminder flag so a fresh Sold cycle gets its own 24-hour reminder
-    product.reminderSent = false;
+   product.reminderSent = false;
     await product.save();
+
+    await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+
     res.json(product);
   } catch (error) {
     next(error);
@@ -268,6 +312,9 @@ const markAsContactedSold = async (req, res, next) => {
     // Reset the reminder flag so this fresh Sold cycle gets its own 24-hour reminder
     product.reminderSent = false;
     await product.save();
+
+    await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+
     res.json(product);
   } catch (error) {
     next(error);
@@ -303,7 +350,10 @@ const toggleFavorite = async (req, res, next) => {
       product.favoritedBy.push(req.user._id);
     }
 
-    await product.save();
+  await product.save();
+
+    await cacheDel(`product:${product._id}`);
+
     res.json({ favorited: !alreadyFavorited });
   } catch (error) {
     next(error);
