@@ -6,6 +6,11 @@ export const login = (data) => api.post('/auth/login', data).then((res) => res.d
 
 export const googleAuth = (data) => api.post('/auth/google', data).then((res) => res.data);
 
+export const forgotPassword = (data) => api.post('/auth/forgot-password', data).then((res) => res.data);
+
+export const resetPassword = (token, data) =>
+  api.post(`/auth/reset-password/${token}`, data).then((res) => res.data);
+
 export const getProfile = () => api.get('/auth/profile').then((res) => res.data);
 
 export const updateProfile = (data) => api.put('/auth/profile', data).then((res) => res.data);

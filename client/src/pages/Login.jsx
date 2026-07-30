@@ -118,11 +118,17 @@ export default function Login() {
     </button>
   </div>
 
-  {errors.password && (
+{errors.password && (
     <p className="text-xs text-red-600 mt-1">
       Minimum 6 characters
     </p>
   )}
+
+  <div className="text-right mt-1">
+    <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">
+      Forgot your password?
+    </Link>
+  </div>
 </div>
 
 
