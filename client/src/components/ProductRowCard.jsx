@@ -45,10 +45,7 @@ export default function ProductRowCard({ product }) {
     {product.condition}
   </p>
 
-  <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-    <ClockIcon className="h-3 w-3 flex-shrink-0" />
-    {timeAgo(product.createdAt)}
-  </p>
+  
 </div>
 
 
