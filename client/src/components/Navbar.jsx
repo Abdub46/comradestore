@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { BellIcon, CartIcon } from './icons';
+import { CartIcon } from './icons';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -48,17 +49,7 @@ export default function Navbar() {
             {darkMode ? '☀️' : '🌙'}
           </button>
 
-          {/* Notification bell - visual placeholder for now. Real unread
-              counts need a notification system, which isn't built yet;
-              showing a fake badge number here would be misleading, so this
-              stays a plain icon until that feature exists. */}
-          <button
-            aria-label="Notifications"
-            title="Notifications"
-            className="relative text-white/90 hover:text-white"
-          >
-            <BellIcon className="h-5 w-5" />
-          </button>
+          {user && <NotificationBell />}
 
           <Link to="/cart" className="relative text-white/90 hover:text-white" title="Cart">
             <CartIcon className="h-5 w-5" />

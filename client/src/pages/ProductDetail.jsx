@@ -51,8 +51,8 @@ export default function ProductDetail() {
   // background. Updates the cached product directly via setQueryData
   // instead of separate component state, so the cache and the screen can
   // never disagree with each other.
-  const handleContactSeller = () => {
-    markAsContacted(product._id)
+const handleContactSeller = () => {
+    markAsContacted(product._id, product.contactToken)
       .then(() => {
         queryClient.setQueryData(['product', id], (old) => (old ? { ...old, status: 'Sold' } : old));
       })

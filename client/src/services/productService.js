@@ -44,4 +44,5 @@ export const updateProductStatus = (id, status) =>
 // Called when a buyer clicks "Contact Seller" - no login required
 export const toggleFavorite = (id) => api.patch(`/products/${id}/favorite`).then((res) => res.data);
 
-export const markAsContacted = (id) => api.patch(`/products/${id}/contact`).then((res) => res.data);
+export const markAsContacted = (id, contactToken) =>
+  api.patch(`/products/${id}/contact`, { contactToken }).then((res) => res.data);
