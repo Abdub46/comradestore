@@ -19,6 +19,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const cronRoutes = require('./routes/cronRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Fail fast if critical secrets are missing - safer than starting with an
 // insecure default JWT secret
@@ -33,8 +34,8 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
 
 connectDB();
 
-const { startSoldReminderJob } = require('./jobs/soldReminderJob');
-startSoldReminderJob();
+const { startReservationLifecycleJob } = require('./jobs/reservationLifecycleJob');
+startReservationLifecycleJob();
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/cron', cronRoutes);
 app.use('/api/banner', bannerRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api', (req, res) => {

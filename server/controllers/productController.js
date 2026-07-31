@@ -12,6 +12,7 @@ const {
   DEFAULT_TTL_SECONDS,
   PRODUCT_TTL_SECONDS,
 } = require('../utils/cache');
+const { generateContactToken, verifyContactToken } = require('../utils/contactToken');
 
 // @desc    Get all products (with search + filters + pagination)
 // @route   GET /api/products
@@ -27,10 +28,12 @@ const getProducts = async (req, res, next) => {
       status,
       minPrice,
       maxPrice,
-      maxAgeDays,
       page = 1,
       limit = 12,
       sort = '-createdAt',
+      // Used by Home's "Recently Added" row - e.g. maxAgeDays=2 restricts
+      // results to products created within the last 2 days.
+      maxAgeDays,
     } = req.query;
 
     const filter = {};
@@ -51,21 +54,18 @@ const getProducts = async (req, res, next) => {
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
-
     if (maxAgeDays) {
-  const since = new Date(Date.now() - Number(maxAgeDays) * 24 * 60 * 60 * 1000);
-  filter.createdAt = { $gte: since };
-}
-
-
-
-
-
+      const since = new Date(Date.now() - Number(maxAgeDays) * 24 * 60 * 60 * 1000);
+      filter.createdAt = { $gte: since };
+    }
 
     const pageNum = Math.max(1, Number(page));
     const limitNum = Math.max(1, Number(limit));
     const skip = (pageNum - 1) * limitNum;
 
+    // Cache-aside: key includes every query param plus the current list
+    // "version" (see utils/cache.js), so any write to a product makes this
+    // exact key unreachable without having to hunt it down and delete it.
     const version = await getProductsListVersion();
     const cacheKey = `products:list:v${version}:${JSON.stringify(req.query)}`;
 
@@ -93,7 +93,6 @@ const getProducts = async (req, res, next) => {
     await cacheSet(cacheKey, payload, DEFAULT_TTL_SECONDS);
 
     res.json(payload);
-
   } catch (error) {
     next(error);
   }
@@ -121,15 +120,24 @@ const getProductById = async (req, res, next) => {
       await cacheSet(cacheKey, product, PRODUCT_TTL_SECONDS);
     }
 
+    // Fire-and-forget: bumps the real view count in MongoDB without
+    // blocking the response or touching the cache. This means the view
+    // count shown to visitors can lag behind reality by up to
+    // PRODUCT_TTL_SECONDS (5 min) - a fine trade-off since views are a
+    // rough popularity signal, not something that needs to be exact.
     Product.updateOne({ _id: req.params.id }, { $inc: { views: 1 } }).catch(() => {});
 
-    res.json(product);
+    // Computed fresh on every request (never cached) - proves to
+    // markAsContactedSold that this browser actually loaded this product's
+    // detail page recently, rather than blindly looping over IDs.
+    const productData = typeof product.toObject === 'function' ? product.toObject() : product;
+    const contactToken = generateContactToken(req.params.id);
+
+    res.json({ ...productData, contactToken });
   } catch (error) {
     next(error);
   }
 };
-
-
 
 // @desc    Create a product listing
 // @route   POST /api/products
@@ -142,6 +150,11 @@ const createProduct = async (req, res, next) => {
       return res.status(400).json({ message: 'Please fill in all required fields' });
     }
 
+    // Discount is optional - only validate it when the seller actually provided one
+    if (discount !== undefined && discount !== '' && (Number(discount) < 0 || Number(discount) > 100)) {
+      return res.status(400).json({ message: 'Discount must be between 0 and 100' });
+    }
+
     // Each uploaded image is converted to WebP (via sharp) before being
     // uploaded to Cloudinary, shrinking file size with no visible quality loss.
     const images = await Promise.all(
@@ -152,21 +165,20 @@ const createProduct = async (req, res, next) => {
     );
 
     const product = await Product.create({
-  seller: req.user._id,
-  title: stripHtml(title),
-  description: stripHtml(description),
-  category,
-  price,
-  condition,
-  residence,
-  discount:
-    discount !== undefined && discount !== ''
-      ? Number(discount)
-      : 0,
-  images,
-});
+      seller: req.user._id,
+      title: stripHtml(title),
+      description: stripHtml(description),
+      category,
+      price,
+      condition,
+      residence,
+      images,
+      discount: discount !== undefined && discount !== '' ? Number(discount) : 0,
+    });
 
-await bumpProductsListVersion();
+    // New listing changes what every list/filter page should show -
+    // invalidate all cached list pages at once.
+    await bumpProductsListVersion();
 
     // Fire-and-forget: notifies all other users by email that a new item
     // was listed. Not awaited, so this never delays the seller's response,
@@ -194,22 +206,21 @@ const updateProduct = async (req, res, next) => {
       return res.status(403).json({ message: 'You can only edit your own listings' });
     }
 
-    const fields = ['title', 'description', 'category', 'price', 'condition', 'residence', 'discount' ];
+    const fields = ['title', 'description', 'category', 'price', 'condition', 'residence', 'discount'];
     fields.forEach((field) => {
-  if (req.body[field] !== undefined) {
-    let value = req.body[field];
-
-    if (field === 'discount') {
-      value = value === '' ? 0 : Number(value);
-    }
-
-    // title/description are free text - strip any HTML/scripts before saving
-    product[field] =
-      field === 'title' || field === 'description'
-        ? stripHtml(value)
-        : value;
-  }
-});
+      if (req.body[field] !== undefined) {
+        const value = req.body[field];
+        if (field === 'title' || field === 'description') {
+          // title/description are free text - strip any HTML/scripts before saving
+          product[field] = stripHtml(value);
+        } else if (field === 'discount') {
+          // Optional - blank input means "no discount", not "leave unchanged"
+          product.discount = value === '' ? 0 : Number(value);
+        } else {
+          product[field] = value;
+        }
+      }
+    });
 
     // Append any newly uploaded images (up to 5 total), converting each to
     // WebP via sharp before uploading, same as createProduct
@@ -248,7 +259,7 @@ const deleteProduct = async (req, res, next) => {
       return res.status(403).json({ message: 'You can only delete your own listings' });
     }
 
-   await product.deleteOne();
+    await product.deleteOne();
 
     await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
 
@@ -280,10 +291,28 @@ const updateProductStatus = async (req, res, next) => {
     }
 
     product.status = status;
-    // Start (or clear) the 2-day auto-delete timer based on the new status
-    product.soldAt = status === 'Sold' ? new Date() : null;
-    // Reset the reminder flag so a fresh Sold cycle gets its own 24-hour reminder
-   product.reminderSent = false;
+
+    if (status === 'Available') {
+      // Fully reset - no reservation clock running
+      product.soldAt = null;
+      product.contactedAt = null;
+      product.reminderSent = false;
+      product.reminderSentAt = null;
+    } else if (status === 'Reserved') {
+      // Manually reserving it (e.g. seller reserves it for someone offline)
+      // starts the same 24h-then-24h clock as a buyer contacting them
+      product.soldAt = null;
+      product.contactedAt = new Date();
+      product.reminderSent = false;
+      product.reminderSentAt = null;
+    } else if (status === 'Sold') {
+      // Start the 2-day auto-delete timer; reservation clock no longer applies
+      product.soldAt = new Date();
+      product.contactedAt = null;
+      product.reminderSent = false;
+      product.reminderSentAt = null;
+    }
+
     await product.save();
 
     await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
@@ -294,26 +323,38 @@ const updateProductStatus = async (req, res, next) => {
   }
 };
 
-// @desc    Mark a product as Sold as soon as a buyer clicks "Contact Seller"
-//          Stays Sold until the seller manually toggles it back in their Dashboard
+// @desc    Flip a product to Reserved as soon as a buyer clicks "Contact Seller".
+//          Starts a 24h-then-24h clock: reminder email+notification at 24h if
+//          still Reserved, then auto-flips to Sold at 48h if still no action
+//          from the seller (which then auto-deletes 2 days later via the
+//          soldAt TTL index below).
 // @route   PATCH /api/products/:id/contact
-// @access  Public
+// @access  Public (protected by the short-lived contact token, not login)
 const markAsContactedSold = async (req, res, next) => {
   try {
+    if (!verifyContactToken(req.params.id, req.body.contactToken)) {
+      return res.status(403).json({ message: 'This link has expired - please refresh the product page and try again.' });
+    }
+
     const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    product.status = 'Sold';
-    // Start the 2-day auto-delete timer
-    product.soldAt = new Date();
-    // Reset the reminder flag so this fresh Sold cycle gets its own 24-hour reminder
-    product.reminderSent = false;
-    await product.save();
+    // Only start the clock the first time a product is contacted. If it's
+    // already Reserved (an earlier buyer already contacted the seller) or
+    // already Sold, don't reset the timers - just let this buyer's WhatsApp
+    // message go through as normal without touching the product record.
+    if (product.status === 'Available') {
+      product.status = 'Reserved';
+      product.contactedAt = new Date();
+      product.reminderSent = false;
+      product.reminderSentAt = null;
+      await product.save();
 
-    await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+      await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+    }
 
     res.json(product);
   } catch (error) {
@@ -350,7 +391,7 @@ const toggleFavorite = async (req, res, next) => {
       product.favoritedBy.push(req.user._id);
     }
 
-  await product.save();
+    await product.save();
 
     await cacheDel(`product:${product._id}`);
 

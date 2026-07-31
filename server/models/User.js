@@ -14,13 +14,14 @@ const userSchema = new mongoose.Schema(
     },
     password: {
   type: String,
-  minlength: 6,
+  minlength: 8,
   required: function () {
     return !this.googleId; // password not needed for Google-signed-in users
   },
 },
 googleId: { type: String, unique: true, sparse: true },
-resetPasswordToken: { type: String, select: false },
+    isAdmin: { type: Boolean, default: false },
+    resetPasswordToken: { type: String, select: false },
 resetPasswordExpires: { type: Date, select: false },
     // Stored in normalized WhatsApp format e.g. 254712345678
     phone: { type: String, required: true, unique: true },

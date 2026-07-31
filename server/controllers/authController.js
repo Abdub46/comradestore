@@ -3,6 +3,8 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const verifyGoogleToken = require('../utils/verifyGoogleToken');
 const transporter = require('../config/mailer');
+const { stripHtml } = require('../utils/sanitize');
+const { isValidEmailFormat } = require('../utils/validators');
 const { formatPhoneNumber, isValidKenyanPhone } = require('../utils/phoneFormatter');
 
 // @desc    Register a new user
@@ -16,12 +18,16 @@ const registerUser = async (req, res, next) => {
       return res.status(400).json({ message: 'Please fill in all required fields' });
     }
 
+    if (!isValidEmailFormat(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
+    }
+
     if (password !== confirmPassword) {
       return res.status(400).json({ message: 'Passwords do not match' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+   if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
     if (!isValidKenyanPhone(phone)) {
@@ -44,15 +50,14 @@ const registerUser = async (req, res, next) => {
       return res.status(400).json({ message: 'An account with that phone number already exists' });
     }
 
-    const user = await User.create({
-      firstName,
-      lastName,
+ const user = await User.create({
+      firstName: stripHtml(firstName),
+      lastName: stripHtml(lastName),
       email: email.toLowerCase(),
       password,
       phone: normalizedPhone,
       residence,
     });
-
     res.status(201).json({
       user,
       token: generateToken(user._id),
@@ -120,8 +125,12 @@ const updateProfile = async (req, res, next) => {
       return res.status(400).json({ message: 'Please select a valid residence' });
     }
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
+    if (avatar && avatar !== '/default-avatar.png' && !/^https?:\/\//.test(avatar)) {
+      return res.status(400).json({ message: 'Avatar must be a valid image URL' });
+    }
+
+    user.firstName = firstName ? stripHtml(firstName) : user.firstName;
+    user.lastName = lastName ? stripHtml(lastName) : user.lastName;
     user.residence = residence || user.residence;
     user.avatar = avatar || user.avatar;
 
@@ -183,9 +192,9 @@ const googleAuth = async (req, res, next) => {
       return res.status(400).json({ message: 'An account with that phone number already exists' });
     }
 
-    user = await User.create({
-      firstName: googleProfile.firstName,
-      lastName: googleProfile.lastName,
+   user = await User.create({
+      firstName: stripHtml(googleProfile.firstName),
+      lastName: stripHtml(googleProfile.lastName),
       email: googleProfile.email,
       googleId: googleProfile.googleId,
       phone: normalizedPhone,
@@ -201,9 +210,9 @@ const googleAuth = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: 'Please provide your email address' });
+   const { email } = req.body;
+    if (!email || !isValidEmailFormat(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
@@ -259,10 +268,9 @@ const resetPassword = async (req, res, next) => {
     if (password !== confirmPassword) {
       return res.status(400).json({ message: 'Passwords do not match' });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+   if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
-
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({

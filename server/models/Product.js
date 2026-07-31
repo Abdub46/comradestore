@@ -58,19 +58,26 @@ const productSchema = new mongoose.Schema(
     // to auto-delete the product 2 days after it was marked Sold.
     // Stays null while status is Available/Reserved.
     soldAt: { type: Date, default: null },
-    // Tracks whether the 24-hour "please update your status" reminder email
-    // has already been sent for the current Sold cycle, so it only fires once.
+    // Timestamp of when a buyer clicked "Contact Seller" (status became
+    // Reserved). Drives the 24h-then-24h reservation lifecycle below.
+    contactedAt: { type: Date, default: null },
+    // Tracks whether the 24-hour "please confirm the sale" reminder has
+    // already been sent for the current Reserved cycle, so it only fires once.
     reminderSent: { type: Boolean, default: false },
+    // When that reminder was actually sent - the second 24h window (after
+    // which the listing auto-flips to Sold if the seller took no action)
+    // is measured from this, not from contactedAt.
+    reminderSentAt: { type: Date, default: null },
     views: { type: Number, default: 0 },
     favoritedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-
-
+    // Optional discount percentage set by the seller (e.g. 10 -> "-10%" badge).
+    // Left at 0 (falsy) when the seller doesn't want to advertise a discount.
     discount: {
-  type: Number,
-  default: 0,
-  min: [0, 'Discount cannot be negative'],
-  max: [100, 'Discount cannot exceed 100%'],
-},
+      type: Number,
+      default: 0,
+      min: [0, 'Discount cannot be negative'],
+      max: [100, 'Discount cannot exceed 100%'],
+    },
   },
   { timestamps: true }
 );

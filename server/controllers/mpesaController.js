@@ -13,8 +13,13 @@ const initiateStkPush = async (req, res, next) => {
       return res.status(400).json({ message: 'Phone number and amount are required' });
     }
 
-    if (!isValidKenyanPhone(phone)) {
+  if (!isValidKenyanPhone(phone)) {
       return res.status(400).json({ message: 'Please enter a valid M-Pesa phone number' });
+    }
+
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount < 1 || numericAmount > 150000) {
+      return res.status(400).json({ message: 'Amount must be between KSh 1 and KSh 150,000' });
     }
 
     const formattedPhone = formatPhoneNumber(phone);
@@ -29,7 +34,7 @@ const initiateStkPush = async (req, res, next) => {
         Password: password,
         Timestamp: timestamp,
         TransactionType: 'CustomerPayBillOnline',
-        Amount: Math.round(Number(amount)),
+        Amount: Math.round(numericAmount),
         PartyA: formattedPhone,
         PartyB: process.env.MPESA_SHORTCODE,
         PhoneNumber: formattedPhone,

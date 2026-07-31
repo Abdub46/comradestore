@@ -1,9 +1,7 @@
 const transporter = require('../config/mailer');
 const { stripHtml } = require('../utils/sanitize');
+const { isValidEmailFormat } = require('../utils/validators');
 
-// @desc    Send a contact form submission by email
-// @route   POST /api/contact
-// @access  Public
 const sendContactMessage = async (req, res, next) => {
   try {
     const { name, email, phone, message } = req.body;
@@ -12,21 +10,26 @@ const sendContactMessage = async (req, res, next) => {
       return res.status(400).json({ message: 'Please fill in all fields' });
     }
 
-    // Strip any HTML/scripts before this text gets embedded into the email
+    if (!isValidEmailFormat(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
+    }
+
     const safeName = stripHtml(name);
+    const safeEmail = stripHtml(email);
+    const safePhone = stripHtml(phone);
     const safeMessage = stripHtml(message);
 
     await transporter.sendMail({
       from: `"HomeMarket Contact Form" <${process.env.EMAIL_USER}>`,
       to: 'infohorizoncentre@gmail.com',
-      replyTo: email,
+      replyTo: safeEmail,
       subject: `New Contact Form Message from ${safeName}`,
-      text: `Name: ${safeName}\nEmail: ${email}\nPhone: ${phone}\n\nMessage:\n${safeMessage}`,
+      text: `Name: ${safeName}\nEmail: ${safeEmail}\nPhone: ${safePhone}\n\nMessage:\n${safeMessage}`,
       html: `
         <h3>New Contact Form Submission</h3>
         <p><strong>Name:</strong> ${safeName}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Email:</strong> ${safeEmail}</p>
+        <p><strong>Phone:</strong> ${safePhone}</p>
         <p><strong>Message:</strong></p>
         <p>${safeMessage.replace(/\n/g, '<br>')}</p>
       `,
