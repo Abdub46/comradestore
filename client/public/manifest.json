@@ -1,7 +1,7 @@
 {
-  "name": "ComradeMarket - Buy & Sell Items",
+  "name": "ComradeMarket App",
   "short_name": "ComradeMarket",
-  "description": "A peer-to-peer marketplace for second-hand items. Contact sellers directly on WhatsApp.",
+  "description": "A peer-to-peer marketplace for second-hand/New items. Contact sellers directly on WhatsApp.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
