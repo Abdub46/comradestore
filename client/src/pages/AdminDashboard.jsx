@@ -219,7 +219,7 @@ export default function AdminDashboard() {
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
-          Dashboard
+          Overview
         </button>
         <button
           onClick={() => setActiveTab('health')}
