@@ -33,10 +33,19 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link to="/" className="hover:text-yellow-300">Home</Link>
-          <Link to="/search" className="hover:text-yellow-300">Browse</Link>
-          {user && <Link to="/sell" className="hover:text-yellow-300">Sell Item</Link>}
+          {!user?.isAdmin && (
+            <>
+              <Link to="/" className="hover:text-yellow-300">Home</Link>
+              <Link to="/search" className="hover:text-yellow-300">Browse</Link>
+              {user && <Link to="/sell" className="hover:text-yellow-300">Sell Item</Link>}
+            </>
+          )}
           {user && <Link to="/dashboard" className="hover:text-yellow-300">Dashboard</Link>}
+          {user?.isAdmin && (
+            <Link to="/admin" className="hover:text-yellow-300 text-yellow-300 font-semibold">
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -115,10 +124,19 @@ export default function Navbar() {
             className="md:hidden border-t border-white/10 overflow-hidden bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <div className="px-4 py-2 flex flex-col divide-y divide-gray-200 dark:divide-gray-700 text-sm font-medium">
-              <Link to="/" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Home</Link>
-              <Link to="/search" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Browse</Link>
-              {user && <Link to="/sell" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Sell Item</Link>}
+              {!user?.isAdmin && (
+                <>
+                  <Link to="/" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Home</Link>
+                  <Link to="/search" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Browse</Link>
+                  {user && <Link to="/sell" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Sell Item</Link>}
+                </>
+              )}
               {user && <Link to="/dashboard" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Dashboard</Link>}
+              {user?.isAdmin && (
+                <Link to="/admin" onClick={closeMobileMenu} className="py-3 font-semibold text-primary-600">
+                  Admin
+                </Link>
+              )}
 
               {user ? (
                 <>

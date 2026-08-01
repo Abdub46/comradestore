@@ -5,6 +5,8 @@ import Footer from './components/Footer';
 import Banner from './components/Banner';
 import BottomNav from './components/BottomNav';
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
+import MaintenanceBanner from './components/MaintenanceBanner';
 import Loader from './components/Loader';
 import { trackPageView } from './services/analyticsService';
 
@@ -38,13 +40,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <MaintenanceBanner />
       <Banner />
       <Navbar />
       <main className="flex-1 pb-20 md:pb-0">
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route path="/" element={<Home />} />
-           <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -90,9 +93,9 @@ export default function App() {
             <Route
               path="/admin"
               element={
-                <PrivateRoute>
+                <AdminRoute>
                   <AdminDashboard />
-                </PrivateRoute>
+                </AdminRoute>
               }
             />
 

@@ -17,6 +17,8 @@ import {
 import Loader from '../components/Loader';
 import { getAllUsers, getSignupStats, getAnalyticsOverview, getHealthStatus } from '../services/adminService';
 import { getBanner, updateBanner } from '../services/bannerService';
+import { getSettings, updateSettings } from '../services/settingsService';
+import { getErrorLogs, deleteErrorLog, clearErrorLogs } from '../services/errorLogService';
 import { timeAgo } from '../utils/format';
 
 const DEVICE_COLORS = { Desktop: '#16a34a', Mobile: '#3b82f6', Tablet: '#f59e0b' };
@@ -45,6 +47,8 @@ function HealthRow({ label, healthy }) {
 }
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('overview');
+
   const [users, setUsers] = useState([]);
   const [usersPage, setUsersPage] = useState(1);
   const [totalUserPages, setTotalUserPages] = useState(1);
@@ -66,6 +70,17 @@ export default function AdminDashboard() {
   });
   const [bannerSaving, setBannerSaving] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
+
+  const [siteSettings, setSiteSettings] = useState({
+    maintenanceMode: false,
+    maintenanceMessage: '',
+    contactEmail: '',
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState('');
+
+  const [errorLogs, setErrorLogs] = useState([]);
+  const [errorLogsMessage, setErrorLogsMessage] = useState('');
 
   // Users are paginated (20 per page), so this refetches whenever the
   // admin clicks Previous/Next - kept separate from the one-time effect
@@ -104,6 +119,20 @@ export default function AdminDashboard() {
         }
       })
       .catch(() => {});
+
+    // Same for site settings
+    getSettings()
+      .then((data) => {
+        if (data) {
+          setSiteSettings((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {});
+
+    // Error/security log for the Health tab
+    getErrorLogs()
+      .then((data) => setErrorLogs(data.logs))
+      .catch(() => {});
   }, []);
 
   const handleBannerChange = (e) => {
@@ -125,6 +154,43 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSettingsChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setSiteSettings((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSettingsSave = async (e) => {
+    e.preventDefault();
+    setSettingsSaving(true);
+    setSettingsMessage('');
+    try {
+      await updateSettings(siteSettings);
+      setSettingsMessage('Settings saved successfully.');
+    } catch (err) {
+      setSettingsMessage(err.response?.data?.message || 'Failed to save settings.');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const handleResolveErrorLog = async (id) => {
+    try {
+      await deleteErrorLog(id);
+      setErrorLogs((prev) => prev.filter((log) => log._id !== id));
+    } catch (err) {
+      setErrorLogsMessage(err.response?.data?.message || 'Failed to remove that entry.');
+    }
+  };
+
+  const handleClearAllErrorLogs = async () => {
+    try {
+      await clearErrorLogs();
+      setErrorLogs([]);
+    } catch (err) {
+      setErrorLogsMessage(err.response?.data?.message || 'Failed to clear the log.');
+    }
+  };
+
   if (loading) return <Loader />;
 
   if (error) {
@@ -143,21 +209,47 @@ export default function AdminDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-      {/* Website Health */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8">
-        <h2 className="text-lg font-semibold mb-2">Website Health</h2>
-        {health ? (
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            <HealthRow label="Backend Status" healthy={health.backend} />
-            <HealthRow label="Database" healthy={health.database} />
-            <HealthRow label="Cloudinary" healthy={health.cloudinary} />
-            <HealthRow label="Email Service" healthy={health.email} />
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">Health status unavailable right now.</p>
-        )}
+      {/* Tab switcher */}
+      <div className="flex gap-2 mb-6 border-b dark:border-gray-700">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            activeTab === 'overview'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          Dashboard
+        </button>
+        <button
+          onClick={() => setActiveTab('health')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            activeTab === 'health'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          Health
+          {errorLogs.length > 0 && (
+            <span className="ml-1.5 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full bg-red-500 text-white text-xs font-bold">
+              {errorLogs.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            activeTab === 'settings'
+              ? 'border-primary-600 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          Settings
+        </button>
       </div>
 
+      {activeTab === 'overview' && (
+        <>
       {/* Performance stat cards */}
       <h2 className="text-lg font-semibold mb-3">Website Performance</h2>
       {performance ? (
@@ -304,6 +396,145 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {activeTab === 'health' && (
+        <>
+      {/* Service status */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8">
+        <h2 className="text-lg font-semibold mb-2">Website Health</h2>
+        {health ? (
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <HealthRow label="Backend Status" healthy={health.backend} />
+            <HealthRow label="Database" healthy={health.database} />
+            <HealthRow label="Cloudinary" healthy={health.cloudinary} />
+            <HealthRow label="Email Service" healthy={health.email} />
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">Health status unavailable right now.</p>
+        )}
+      </div>
+
+      {/* Error / security log */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Errors & Security Threats ({errorLogs.length})</h2>
+          {errorLogs.length > 0 && (
+            <button
+              onClick={handleClearAllErrorLogs}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+
+        {errorLogsMessage && (
+          <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-3">
+            {errorLogsMessage}
+          </div>
+        )}
+
+        {errorLogs.length === 0 ? (
+          <p className="text-gray-500 text-sm">No errors or security threats logged. All clear.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+            {errorLogs.map((log, index) => (
+              <li key={log._id} className="py-3 flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-mono text-gray-400">#{errorLogs.length - index}</span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        log.severity === 'security'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
+                      {log.severity === 'security' ? 'Security' : 'Error'}
+                    </span>
+                    <span className="text-xs text-gray-400 uppercase">{log.source}</span>
+                  </div>
+                  <p className="text-sm break-words">{log.message}</p>
+                  {log.path && <p className="text-xs text-gray-400 mt-0.5">{log.path}</p>}
+                  <p className="text-xs text-gray-400 mt-0.5">{timeAgo(log.createdAt)}</p>
+                </div>
+                <button
+                  onClick={() => handleResolveErrorLog(log._id)}
+                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                >
+                  Mark Resolved
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+        </>
+      )}
+
+      {activeTab === 'settings' && (
+        <>
+      {/* General site settings */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-8">
+        <h2 className="text-lg font-semibold mb-4">General Settings</h2>
+
+        {settingsMessage && (
+          <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3">
+            {settingsMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSettingsSave} className="space-y-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="maintenanceMode"
+              name="maintenanceMode"
+              checked={siteSettings.maintenanceMode}
+              onChange={handleSettingsChange}
+              className="h-4 w-4"
+            />
+            <label htmlFor="maintenanceMode" className="text-sm font-medium">
+              Maintenance mode (shows a notice to every visitor)
+            </label>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Maintenance Message</label>
+            <textarea
+              name="maintenanceMessage"
+              value={siteSettings.maintenanceMessage}
+              onChange={handleSettingsChange}
+              rows={2}
+              maxLength={300}
+              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-600"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Contact Form Email</label>
+            <input
+              type="email"
+              name="contactEmail"
+              value={siteSettings.contactEmail}
+              onChange={handleSettingsChange}
+              placeholder="you@example.com"
+              className="mt-1 w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-900 dark:border-gray-600"
+            />
+            <p className="text-xs text-gray-400 mt-1">Where messages from the Contact Us page get sent.</p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={settingsSaving}
+            className="bg-primary-600 text-white font-semibold px-5 py-2.5 rounded-md hover:bg-primary-700 disabled:opacity-60"
+          >
+            {settingsSaving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </form>
+      </div>
 
       {/* Banner settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
@@ -406,6 +637,8 @@ export default function AdminDashboard() {
           </button>
         </form>
       </div>
+        </>
+      )}
     </div>
   );
 }
