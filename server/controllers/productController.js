@@ -13,6 +13,7 @@ const {
   PRODUCT_TTL_SECONDS,
 } = require('../utils/cache');
 const { generateContactToken, verifyContactToken } = require('../utils/contactToken');
+const logError = require('../utils/logError');
 
 // @desc    Get all products (with search + filters + pagination)
 // @route   GET /api/products
@@ -333,6 +334,13 @@ const updateProductStatus = async (req, res, next) => {
 const markAsContactedSold = async (req, res, next) => {
   try {
     if (!verifyContactToken(req.params.id, req.body.contactToken)) {
+      logError({
+        source: 'server',
+        severity: 'security',
+        message: `Invalid/expired contact token used on product ${req.params.id} - possible ID enumeration attempt`,
+        path: req.originalUrl,
+        statusCode: 403,
+      });
       return res.status(403).json({ message: 'This link has expired - please refresh the product page and try again.' });
     }
 

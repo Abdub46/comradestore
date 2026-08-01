@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const logError = require('../utils/logError');
 
 const cronAuth = (req, res, next) => {
   const providedKey = req.query.key || req.headers['x-cron-secret'];
@@ -14,6 +15,13 @@ const cronAuth = (req, res, next) => {
     expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
 
   if (!isValid) {
+    logError({
+      source: 'server',
+      severity: 'security',
+      message: 'Invalid or missing cron key on a cron-triggered route',
+      path: req.originalUrl,
+      statusCode: 403,
+    });
     return res.status(403).json({ message: 'Invalid or missing cron key' });
   }
 

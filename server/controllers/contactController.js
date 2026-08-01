@@ -1,7 +1,11 @@
 const transporter = require('../config/mailer');
+const Settings = require('../models/Settings');
 const { stripHtml } = require('../utils/sanitize');
 const { isValidEmailFormat } = require('../utils/validators');
 
+// @desc    Send a contact form submission by email
+// @route   POST /api/contact
+// @access  Public
 const sendContactMessage = async (req, res, next) => {
   try {
     const { name, email, phone, message } = req.body;
@@ -14,14 +18,17 @@ const sendContactMessage = async (req, res, next) => {
       return res.status(400).json({ message: 'Please enter a valid email address' });
     }
 
+    // Strip any HTML/scripts before any of this text gets embedded into the email
     const safeName = stripHtml(name);
     const safeEmail = stripHtml(email);
     const safePhone = stripHtml(phone);
     const safeMessage = stripHtml(message);
 
+    const settings = await Settings.getSingleton();
+
     await transporter.sendMail({
       from: `"HomeMarket Contact Form" <${process.env.EMAIL_USER}>`,
-      to: 'infohorizoncentre@gmail.com',
+      to: settings.contactEmail,
       replyTo: safeEmail,
       subject: `New Contact Form Message from ${safeName}`,
       text: `Name: ${safeName}\nEmail: ${safeEmail}\nPhone: ${safePhone}\n\nMessage:\n${safeMessage}`,

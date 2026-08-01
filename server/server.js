@@ -20,6 +20,8 @@ const cronRoutes = require('./routes/cronRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const errorLogRoutes = require('./routes/errorLogRoutes');
 
 // Fail fast if critical secrets are missing - safer than starting with an
 // insecure default JWT secret
@@ -94,6 +96,8 @@ app.use('/api/cron', cronRoutes);
 app.use('/api/banner', bannerRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/errors', errorLogRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api', (req, res) => {
