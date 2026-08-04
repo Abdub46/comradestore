@@ -11,7 +11,7 @@ export default function ProductRowCard({ product }) {
   const sellerPhone = product.seller?.phone;
 
   return (
-    <div className="relative w-44 sm:w-48 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md overflow-hidden">
+    <div className="relative w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md overflow-hidden">
       <Link to={`/product/${product._id}`} className="block">
         <div className="relative aspect-square bg-gray-100 dark:bg-gray-700">
           {image ? (

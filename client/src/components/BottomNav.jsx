@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { HomeIcon, GridIcon, PlusIcon, CartIcon, UserIcon } from './icons';
@@ -12,6 +13,25 @@ export default function BottomNav() {
   const location = useLocation();
   const { user } = useAuth();
   const { items } = useCart();
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrolledUp = currentScrollY < lastScrollY.current;
+
+      // Hidden while scrolling up, shown while scrolling down (as requested).
+      setHidden(scrolledUp && currentScrollY > 0);
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isActive = (path) => location.pathname === path;
   const tabClass = (path) =>
@@ -20,7 +40,11 @@ export default function BottomNav() {
     }`;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t dark:border-gray-700 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.1)]">
+    <motion.nav
+      animate={{ y: hidden ? '100%' : '0%' }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t dark:border-gray-700 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.1)]"
+    >
       <div className="relative flex items-center justify-around h-16 px-2">
         <Link to="/" className={tabClass('/')}>
           <HomeIcon className="h-5 w-5" />
@@ -58,6 +82,6 @@ export default function BottomNav() {
           Profile
         </Link>
       </div>
-    </nav>
+    </motion.nav>
   );
 }
