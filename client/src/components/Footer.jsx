@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDownIcon } from './icons';
 
@@ -8,6 +8,7 @@ import { ChevronDownIcon } from './icons';
 
 export default function Footer() {
   const [expanded, setExpanded] = useState(false);
+  const panelRef = useRef(null);
 
   // const [showCoffee, setShowCoffee] = useState(false);
   // const [copied, setCopied] = useState(false);
@@ -19,21 +20,29 @@ export default function Footer() {
   //   });
   // };
 
+  // Scroll the panel into view as soon as it opens, so a single click
+  // reveals it immediately instead of leaving it below the fold until the
+  // user scrolls down manually.
+  useEffect(() => {
+    if (expanded && panelRef.current) {
+      const id = setTimeout(() => {
+        panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 260);
+      return () => clearTimeout(id);
+    }
+  }, [expanded]);
+
   return (
-    <footer className="mt-16">
+    <footer className="mt-16 bg-primary-600 text-white">
       {/* Hidden by default - only the brand + toggle chevron show until clicked */}
-      <div className="flex items-center justify-between border-t dark:border-gray-700 px-4">
-
-
-       <span className="text-xs font-semibold text-green-400">Campusmarket</span>
+      <div className="flex items-center justify-between px-4">
+        <span className="text-xs font-semibold text-white">Campusmarket</span>
         <button
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
           aria-label={expanded ? 'Hide footer' : 'Show footer'}
-          className="flex items-center py-2 px-4 text-green-400 hover:text-green-500"
+          className="flex items-center py-2 px-4 text-white hover:text-primary-100"
         >
-
-
           <ChevronDownIcon className={`h-[25px] w-[25px] transition-transform ${expanded ? 'rotate-180' : ''}`} />
         </button>
       </div>
@@ -41,13 +50,14 @@ export default function Footer() {
       <AnimatePresence>
         {expanded && (
           <motion.div
+            ref={panelRef}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden bg-white dark:bg-gray-800 border-t dark:border-gray-700"
+            className="overflow-hidden bg-primary-600 text-white"
           >
-            <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-primary-50">
               {/* Left: copyright */}
               <p className="text-center md:text-left whitespace-nowrap">
                 &copy; {new Date().getFullYear()} HorizonSolutions Kenya. All rights reserved.
@@ -59,25 +69,25 @@ export default function Footer() {
                   href="/about"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary-600 dark:hover:text-primary-300"
+                  className="hover:text-white"
                 >
                   About Us
                 </a>
-                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <span className="text-primary-300">|</span>
                 <a
                   href="/contact"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary-600 dark:hover:text-primary-300"
+                  className="hover:text-white"
                 >
                   Contact Us
                 </a>
-                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <span className="text-primary-300">|</span>
                 <a
                   href="/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary-600 dark:hover:text-primary-300"
+                  className="hover:text-white"
                 >
                   Terms of Service
                 </a>
