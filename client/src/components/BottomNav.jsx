@@ -23,8 +23,14 @@ export default function BottomNav() {
       const currentScrollY = window.scrollY;
       const scrolledUp = currentScrollY < lastScrollY.current;
 
-      // Hidden while scrolling up, shown while scrolling down (as requested).
-      setHidden(scrolledUp && currentScrollY > 0);
+      // Reached the end of the site (bottom of the page, where the footer
+      // lives) - keep the nav out of the way here too, jiji-style.
+      const atBottom =
+        window.innerHeight + currentScrollY >= document.documentElement.scrollHeight - 10;
+
+      // Hidden while scrolling up, or once we hit the bottom of the page;
+      // shown while scrolling down.
+      setHidden((scrolledUp && currentScrollY > 0) || atBottom);
 
       lastScrollY.current = currentScrollY;
     };

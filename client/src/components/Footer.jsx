@@ -42,7 +42,7 @@ export default function Footer() {
             transition={{ duration: 0.25 }}
             className="overflow-hidden bg-white dark:bg-gray-800 border-t dark:border-gray-700"
           >
-            <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
               {/* Left: copyright */}
               <p className="text-center md:text-left whitespace-nowrap">
                 &copy; {new Date().getFullYear()} HorizonSolutions Kenya. All rights reserved.
