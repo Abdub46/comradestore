@@ -28,7 +28,7 @@ export default function Footer() {
           aria-expanded={expanded}
           className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-2 px-4"
         >
-          <ChevronDownIcon className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`h-10 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           {expanded ? 'Hide footer' : 'Show footer'}
         </button>
       </div>
