@@ -21,15 +21,16 @@ export default function Footer() {
 
   return (
     <footer className="mt-16">
-      {/* Hidden by default - this toggle is the only thing visible until clicked */}
-      <div className="flex justify-center border-t dark:border-gray-700">
+      {/* Hidden by default - only the brand + toggle chevron show until clicked */}
+      <div className="flex items-center justify-between border-t dark:border-gray-700 px-4">
+        <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">Campusmarket</span>
         <button
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 py-2 px-4"
+          aria-label={expanded ? 'Hide footer' : 'Show footer'}
+          className="flex items-center py-2 px-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
-          <ChevronDownIcon className={`h-20 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          {expanded ? 'Hide footer' : 'Show footer'}
+          <ChevronDownIcon className={`h-[25px] w-[25px] transition-transform ${expanded ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
