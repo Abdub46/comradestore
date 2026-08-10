@@ -21,6 +21,11 @@ export default function Profile() {
       lastName: user.lastName,
       phone: user.phone,
       residence: user.residence,
+      notificationPreferences: {
+        priceDrops: user.notificationPreferences?.priceDrops ?? true,
+        savedItemStatus: user.notificationPreferences?.savedItemStatus ?? true,
+        residenceActivity: user.notificationPreferences?.residenceActivity ?? true,
+      },
     },
   });
 
@@ -111,6 +116,24 @@ export default function Profile() {
   <option value="Annex">Annex</option>
 </select>
 {errors.residence && <p className="text-xs text-red-600 mt-1">Residence is required</p>}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium block mb-2">Notifications</label>
+          <div className="space-y-2 border rounded-md px-3 py-3 dark:border-gray-600">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register('notificationPreferences.priceDrops')} className="rounded" />
+              Price drops on items I've saved
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register('notificationPreferences.savedItemStatus')} className="rounded" />
+              Reserved/sold updates on items I've saved
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register('notificationPreferences.residenceActivity')} className="rounded" />
+              New listings in my residence
+            </label>
+          </div>
         </div>
 
         <button

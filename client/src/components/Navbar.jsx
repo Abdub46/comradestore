@@ -37,10 +37,12 @@ export default function Navbar() {
             <>
               <Link to="/" className="hover:text-yellow-300">Home</Link>
               <Link to="/search" className="hover:text-yellow-300">Browse</Link>
+              <Link to="/wanted" className="hover:text-yellow-300">Wanted</Link>
               {user && <Link to="/sell" className="hover:text-yellow-300">Sell Item</Link>}
             </>
           )}
           {user && <Link to="/dashboard" className="hover:text-yellow-300">Dashboard</Link>}
+          {user && <Link to="/saved" className="hover:text-yellow-300">Saved</Link>}
           {user?.isAdmin && (
             <Link to="/admin" className="hover:text-yellow-300 text-yellow-300 font-semibold">
               Admin
@@ -128,10 +130,12 @@ export default function Navbar() {
                 <>
                   <Link to="/" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Home</Link>
                   <Link to="/search" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Browse</Link>
+                  <Link to="/wanted" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Wanted</Link>
                   {user && <Link to="/sell" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Sell Item</Link>}
                 </>
               )}
               {user && <Link to="/dashboard" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Dashboard</Link>}
+              {user && <Link to="/saved" onClick={closeMobileMenu} className="py-3 hover:text-primary-600">Saved</Link>}
               {user?.isAdmin && (
                 <Link to="/admin" onClick={closeMobileMenu} className="py-3 font-semibold text-primary-600">
                   Admin

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { formatKsh } from '../utils/format';
 import { useAuth } from '../contexts/AuthContext';
+import FavoriteButton from './FavoriteButton';
 
 const STATUS_STYLES = {
   Available: 'bg-green-100 text-green-700',
@@ -43,6 +44,7 @@ function ProductCard({ product, onAddToCart, inCart }) {
         >
           {product.status}
         </span>
+        <FavoriteButton product={product} className="absolute top-2 right-2" />
       </Link>
 
       <div className="p-3 flex flex-col gap-1 flex-1">

@@ -23,6 +23,9 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const SellItem = lazy(() => import('./pages/SellItem'));
 const EditProduct = lazy(() => import('./pages/EditProduct'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const SavedItems = lazy(() => import('./pages/SavedItems'));
+const Wanted = lazy(() => import('./pages/Wanted'));
+const CreateWanted = lazy(() => import('./pages/CreateWanted'));
 const Profile = lazy(() => import('./pages/Profile'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Cart = lazy(() => import('./pages/Cart'));
@@ -79,6 +82,23 @@ export default function App() {
               element={
                 <PrivateRoute>
                   <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/saved"
+              element={
+                <PrivateRoute>
+                  <SavedItems />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/wanted" element={<Wanted />} />
+            <Route
+              path="/wanted/new"
+              element={
+                <PrivateRoute>
+                  <CreateWanted />
                 </PrivateRoute>
               }
             />

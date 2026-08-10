@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatKsh, timeAgo } from '../utils/format';
 import { buildWhatsAppLink } from '../utils/whatsapp';
+import FavoriteButton from '../components/FavoriteButton';
 
 const STATUS_STYLES = {
   Available: 'bg-green-100 text-green-700',
@@ -106,9 +107,12 @@ const handleContactSeller = () => {
         </div>
 
         <h1 className="text-2xl font-bold mb-1">{product.title}</h1>
-        <p className="text-2xl font-bold text-primary-700 dark:text-primary-300 mb-4">
-          {formatKsh(product.price)}
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+            {formatKsh(product.price)}
+          </p>
+          <FavoriteButton product={product} size="lg" />
+        </div>
 
         <div className="flex gap-4 text-sm text-gray-500 mb-4">
           <span>{product.condition}</span>

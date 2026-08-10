@@ -1,15 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { LocationIcon } from './icons';
-import { formatKsh, timeAgo } from '../utils/format';
-import { buildWhatsAppLink } from '../utils/whatsapp';
+import { formatKsh } from '../utils/format';
 import FavoriteButton from './FavoriteButton';
 
-export default function ProductRowCard({ product, showPostedTime = false, topLeftBadge = null, oldPrice = null }) {
+export default function SavedItemCard({ product }) {
   const image = product.images && product.images[0];
-  const hasDiscount = Number(product.discount) > 0;
+  const hasPriceDrop =
+    product.previousPrice != null && Number(product.price) < Number(product.previousPrice) && product.status !== 'Sold';
+  const isReserved = product.status === 'Reserved';
   const isSold = product.status === 'Sold';
-  const sellerPhone = product.seller?.phone;
 
   return (
     <div className="relative w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md overflow-hidden">
@@ -21,31 +21,17 @@ export default function ProductRowCard({ product, showPostedTime = false, topLef
             <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
           )}
 
-          {topLeftBadge && !isSold && (
-            <span className="absolute top-2 left-2 h-6 px-2 rounded-full bg-black/60 text-white text-[11px] font-semibold flex items-center justify-center shadow-sm">
-              {topLeftBadge}
-            </span>
-          )}
-
-          {hasDiscount && !isSold && (
-            <span className="absolute top-2 right-2 h-8 px-2 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
-              -{product.discount}%
-            </span>
-          )}
-
           {isSold && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white text-sm font-bold uppercase tracking-wide">Sold</span>
             </div>
           )}
-
-          {!isSold && <FavoriteButton product={product} className="absolute bottom-2 right-2" />}
         </div>
 
         <div className="p-3">
-          {oldPrice ? (
+          {hasPriceDrop ? (
             <p className="flex items-baseline gap-2">
-              <span className="text-gray-400 line-through text-xs">{formatKsh(oldPrice)}</span>
+              <span className="text-gray-400 line-through text-xs">{formatKsh(product.previousPrice)}</span>
               <span className="text-primary-700 dark:text-primary-300 font-bold">{formatKsh(product.price)}</span>
             </p>
           ) : (
@@ -56,25 +42,29 @@ export default function ProductRowCard({ product, showPostedTime = false, topLef
             <LocationIcon className="h-3 w-3 flex-shrink-0" />
             {product.residence}
           </p>
-          <p className="text-xs text-gray-400 mt-1">{product.condition}</p>
-          {showPostedTime && (
-            <p className="text-xs text-primary-600 dark:text-primary-400 font-medium mt-1">
-              {timeAgo(product.createdAt)}
+
+          {hasPriceDrop && (
+            <p className="text-xs font-semibold text-green-600 mt-2">
+              🔥 Price dropped by {formatKsh(product.previousPrice - product.price)}
             </p>
           )}
+          {isReserved && <p className="text-xs font-semibold text-orange-600 mt-2">⚠️ This item has been reserved.</p>}
+          {isSold && <p className="text-xs font-semibold text-red-600 mt-2">This item has been marked sold.</p>}
         </div>
       </Link>
 
-      {isSold && sellerPhone && (
-        <a
-          href={buildWhatsAppLink(sellerPhone, product.title)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full text-center text-xs font-semibold bg-primary-600 text-white py-2 hover:bg-primary-700"
+      <div className="flex items-center justify-between px-3 pb-3">
+        <Link
+          to={`/product/${product._id}`}
+          className="text-xs font-semibold text-primary-600 hover:text-primary-700"
         >
-          Contact to Recheck
-        </a>
-      )}
+          View & Contact
+        </Link>
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <FavoriteButton product={product} />
+          <span>Remove</span>
+        </div>
+      </div>
     </div>
   );
 }
