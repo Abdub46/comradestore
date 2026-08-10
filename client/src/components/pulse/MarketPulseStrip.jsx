@@ -22,15 +22,15 @@ export default function MarketPulseStrip({ data, isLoading }) {
         </h3>
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <span>
-            <strong className="text-primary-700 dark:text-primary-300">{newListingsToday}</strong> new listing
+            <strong className="text-primary-700 dark:text-primary-300">{newListingsToday}</strong> New listing
             {newListingsToday === 1 ? '' : 's'} today
           </span>
           <span>
-            <strong className="text-primary-700 dark:text-primary-300">{priceDropsToday}</strong> price drop
+            <strong className="text-primary-700 dark:text-primary-300">{priceDropsToday}</strong> Price drop
             {priceDropsToday === 1 ? '' : 's'} today
           </span>
           <span>
-            <strong className="text-primary-700 dark:text-primary-300">{trendingCount}</strong> trending listing
+            <strong className="text-primary-700 dark:text-primary-300">{trendingCount}</strong> Trending listing
             {trendingCount === 1 ? '' : 's'}
           </span>
         </div>
