@@ -71,7 +71,14 @@ const getPulse = async (req, res, next) => {
     }
 
     // ---- Just Listed ----
-    const justListedPromise = Product.find({ status: { $ne: 'Sold' } })
+    // Must genuinely be recent, not just "the 8 newest of whatever exists" -
+    // otherwise a quiet marketplace would relabel week(s)-old listings as
+    // "Just Listed" simply because nothing newer was posted since.
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const justListedPromise = Product.find({
+      status: { $ne: 'Sold' },
+      createdAt: { $gte: sevenDaysAgo },
+    })
       .select(PUBLIC_PRODUCT_FIELDS)
       .populate('seller', 'firstName lastName phone avatar residence')
       .sort('-createdAt')
