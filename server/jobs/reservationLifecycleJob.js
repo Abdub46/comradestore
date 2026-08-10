@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const Product = require('../models/Product');
 const Notification = require('../models/Notification');
 const transporter = require('../config/mailer');
+const { notifyStatusChange } = require('./savedItemNotifier');
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
@@ -84,6 +85,8 @@ async function autoFlipStaleReservationsToSold() {
     product.reminderSent = false;
     product.reminderSentAt = null;
     await product.save();
+
+    notifyStatusChange(product, 'Sold').catch(() => {});
 
     if (product.seller) {
       try {

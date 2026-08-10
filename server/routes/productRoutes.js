@@ -10,13 +10,15 @@ const {
   markAsContactedSold,
   getMyListings,
   toggleFavorite,
+  getFavorites,
 } = require('../controllers/productController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { contactLimiter } = require('../middleware/security');
 
-// Order matters: /my-listings must be registered before /:id
+// Order matters: /my-listings and /favorites must be registered before /:id
 router.get('/my-listings', protect, getMyListings);
+router.get('/favorites', protect, getFavorites);
 
 router.get('/', getProducts);
 router.get('/:id', getProductById);

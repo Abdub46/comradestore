@@ -3,6 +3,8 @@ const { stripHtml } = require('../utils/sanitize');
 const { convertToWebP } = require('../utils/processImage');
 const { uploadBufferToCloudinary } = require('../utils/cloudinaryUpload');
 const { notifyUsersOfNewListing } = require('../jobs/newListingNotifier');
+const { notifyPriceDrop, notifyStatusChange } = require('../jobs/savedItemNotifier');
+const { notifyMatchingWantedRequests } = require('../jobs/wantedMatcher');
 const {
   cacheGet,
   cacheSet,
@@ -185,6 +187,7 @@ const createProduct = async (req, res, next) => {
     // was listed. Not awaited, so this never delays the seller's response,
     // and .catch swallows any failure so it can never break listing creation.
     notifyUsersOfNewListing(product, req.user._id).catch(() => {});
+    notifyMatchingWantedRequests(product).catch(() => {});
 
     res.status(201).json(product);
   } catch (error) {
@@ -205,6 +208,18 @@ const updateProduct = async (req, res, next) => {
 
     if (product.seller.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'You can only edit your own listings' });
+    }
+
+    // If the seller is actually changing the price, remember the old price
+    // first so genuine price drops can be detected later (Pulse "Price
+    // Drops" section). Only overwritten on a real change, never guessed.
+    let droppedFromPrice = null;
+    if (req.body.price !== undefined) {
+      const newPrice = Number(req.body.price);
+      if (Number.isFinite(newPrice) && newPrice !== product.price) {
+        if (newPrice < product.price) droppedFromPrice = product.price;
+        product.previousPrice = product.price;
+      }
     }
 
     const fields = ['title', 'description', 'category', 'price', 'condition', 'residence', 'discount'];
@@ -238,6 +253,10 @@ const updateProduct = async (req, res, next) => {
     const updated = await product.save();
 
     await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+
+    if (droppedFromPrice !== null) {
+      notifyPriceDrop(updated, droppedFromPrice).catch(() => {});
+    }
 
     res.json(updated);
   } catch (error) {
@@ -318,6 +337,10 @@ const updateProductStatus = async (req, res, next) => {
 
     await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
 
+    if (status === 'Reserved' || status === 'Sold') {
+      notifyStatusChange(product, status).catch(() => {});
+    }
+
     res.json(product);
   } catch (error) {
     next(error);
@@ -350,6 +373,10 @@ const markAsContactedSold = async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // Every verified contact-token use is a genuine "Contact Seller" click,
+    // whether or not it's the first (which also flips status below).
+    Product.updateOne({ _id: product._id }, { $inc: { contactsCount: 1 } }).catch(() => {});
+
     // Only start the clock the first time a product is contacted. If it's
     // already Reserved (an earlier buyer already contacted the seller) or
     // already Sold, don't reset the timers - just let this buyer's WhatsApp
@@ -362,6 +389,8 @@ const markAsContactedSold = async (req, res, next) => {
       await product.save();
 
       await Promise.all([cacheDel(`product:${product._id}`), bumpProductsListVersion()]);
+
+      notifyStatusChange(product, 'Reserved').catch(() => {});
     }
 
     res.json(product);
@@ -409,6 +438,20 @@ const toggleFavorite = async (req, res, next) => {
   }
 };
 
+// @desc    Get the logged-in user's saved/favorited products
+// @route   GET /api/products/favorites
+// @access  Private
+const getFavorites = async (req, res, next) => {
+  try {
+    const products = await Product.find({ favoritedBy: req.user._id })
+      .populate('seller', 'firstName lastName phone avatar residence')
+      .sort('-updatedAt');
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
@@ -419,4 +462,5 @@ module.exports = {
   markAsContactedSold,
   getMyListings,
   toggleFavorite,
+  getFavorites,
 };

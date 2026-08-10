@@ -1,4 +1,3 @@
-
 const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -22,6 +21,9 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const errorLogRoutes = require('./routes/errorLogRoutes');
+const pulseRoutes = require('./routes/pulseRoutes');
+const wantedRoutes = require('./routes/wantedRoutes');
+const sellerRoutes = require('./routes/sellerRoutes');
 
 // Fail fast if critical secrets are missing - safer than starting with an
 // insecure default JWT secret
@@ -38,6 +40,9 @@ connectDB();
 
 const { startReservationLifecycleJob } = require('./jobs/reservationLifecycleJob');
 startReservationLifecycleJob();
+
+const { startResidenceDigestJob } = require('./jobs/residenceDigestJob');
+startResidenceDigestJob();
 
 const app = express();
 
@@ -98,6 +103,9 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/errors', errorLogRoutes);
+app.use('/api/pulse', pulseRoutes);
+app.use('/api/wanted', wantedRoutes);
+app.use('/api/seller', sellerRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api', (req, res) => {

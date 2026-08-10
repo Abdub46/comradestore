@@ -34,6 +34,26 @@ resetPasswordExpires: { type: Date, select: false },
   type: String,
   default: '/default-avatar.png',
 },
+  // Timestamp of this user's last "meaningful visit" to the homepage.
+  // Used by the ComradeMarket Pulse "Since You Last Visited" section to
+  // compute what changed since they were last here. null means the user
+  // has never had a recorded visit yet (existing users included) - the
+  // Pulse endpoint treats that as a first-time visit rather than fabricating
+  // a fake previous session.
+  lastSeenAt: { type: Date, default: null },
+  // Simple per-user toggles for the notification types added in Phase 3.
+  // All default to true so existing users keep getting notified exactly as
+  // before unless they explicitly opt out.
+  notificationPreferences: {
+    priceDrops: { type: Boolean, default: true },
+    savedItemStatus: { type: Boolean, default: true },
+    residenceActivity: { type: Boolean, default: true },
+    wantedMatches: { type: Boolean, default: true },
+  },
+  // Last time the residence-activity digest job notified this user, so it
+  // only counts listings posted since then instead of re-notifying about
+  // the same ones every run. null = never digested yet.
+  lastDigestAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

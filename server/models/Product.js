@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const CATEGORIES = [
@@ -78,6 +77,17 @@ const productSchema = new mongoose.Schema(
       min: [0, 'Discount cannot be negative'],
       max: [100, 'Discount cannot exceed 100%'],
     },
+    // The price this listing had immediately before its most recent price
+    // edit. Set by updateProduct only when the seller actually changes the
+    // price (see productController.js), so it stays null for listings that
+    // have never been price-edited - we never guess/backfill a "previous"
+    // price for existing records. This is what powers the real Price Drops
+    // pulse section (previousPrice > price = genuine reduction).
+    previousPrice: { type: Number, default: null },
+    // Cumulative count of "Contact Seller" clicks (see markAsContactedSold
+    // in productController.js) - incremented every time, not just the
+    // first. Powers the seller-intelligence "💬 contacts" metric.
+    contactsCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -112,7 +112,7 @@ const updateProfile = async (req, res, next) => {
     const user = await require('../models/User').findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const { firstName, lastName, residence, phone, avatar } = req.body;
+    const { firstName, lastName, residence, phone, avatar, notificationPreferences } = req.body;
 
     if (phone && phone !== user.phone) {
       if (!isValidKenyanPhone(phone)) {
@@ -133,6 +133,15 @@ const updateProfile = async (req, res, next) => {
     user.lastName = lastName ? stripHtml(lastName) : user.lastName;
     user.residence = residence || user.residence;
     user.avatar = avatar || user.avatar;
+
+    if (notificationPreferences && typeof notificationPreferences === 'object') {
+      const allowedKeys = ['priceDrops', 'savedItemStatus', 'residenceActivity'];
+      allowedKeys.forEach((key) => {
+        if (typeof notificationPreferences[key] === 'boolean') {
+          user.notificationPreferences[key] = notificationPreferences[key];
+        }
+      });
+    }
 
     const updated = await user.save();
     res.json(updated);
