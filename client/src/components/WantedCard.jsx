@@ -27,19 +27,11 @@ export default function WantedCard({ wanted }) {
   const isOwner = user && wanted.user && user._id === wanted.user._id;
   const isFulfilled = wanted.status === 'Fulfilled';
 
-  const fulfillMutation = useMutation({
-    mutationFn: () => updateWantedStatus(wanted._id, 'Fulfilled'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wanted'] });
-      queryClient.invalidateQueries({ queryKey: ['myWanted'] });
-    },
-  });
-
-  // Lets the owner undo a Reserved request if the deal with that seller
-  // didn't actually go through - same as a seller resetting a Reserved
-  // product back to Available.
-  const reactivateMutation = useMutation({
-    mutationFn: () => updateWantedStatus(wanted._id, 'Active'),
+  // Single mutation the owner's status <select> drives - mirrors
+  // Dashboard.jsx's statusMutation for Product exactly: the owner can pick
+  // any of the 3 statuses at any time, not just move forward.
+  const statusMutation = useMutation({
+    mutationFn: (status) => updateWantedStatus(wanted._id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wanted'] });
       queryClient.invalidateQueries({ queryKey: ['myWanted'] });
@@ -98,30 +90,21 @@ export default function WantedCard({ wanted }) {
 
       <div className="mt-3">
         {isOwner ? (
-          <div className="flex items-center gap-3 text-xs font-semibold">
-            {wanted.status !== 'Fulfilled' && (
-              <button
-                onClick={() => fulfillMutation.mutate()}
-                disabled={fulfillMutation.isPending}
-                className="text-green-600 hover:text-green-700"
-              >
-                Mark Fulfilled
-              </button>
-            )}
-            {wanted.status === 'Reserved' && (
-              <button
-                onClick={() => reactivateMutation.mutate()}
-                disabled={reactivateMutation.isPending}
-                className="text-primary-600 hover:text-primary-700"
-              >
-                Reset to Active
-              </button>
-            )}
-            {wanted.status === 'Fulfilled' && <span className="text-gray-400">Fulfilled</span>}
+          <div className="flex items-center gap-2">
+            <select
+              value={wanted.status}
+              onChange={(e) => statusMutation.mutate(e.target.value)}
+              disabled={statusMutation.isPending}
+              className="text-xs font-semibold border rounded-md px-2 py-1.5 bg-white dark:bg-gray-900 dark:border-gray-600"
+            >
+              <option value="Active">Active</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Fulfilled">Fulfilled</option>
+            </select>
             <button
               onClick={() => deleteMutation.mutate()}
               disabled={deleteMutation.isPending}
-              className="text-red-500 hover:text-red-600"
+              className="text-xs font-semibold text-red-500 hover:text-red-600"
             >
               Delete
             </button>
