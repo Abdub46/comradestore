@@ -84,23 +84,31 @@ const getPulse = async (req, res, next) => {
       .sort('-createdAt')
       .limit(8);
 
-    // ---- Trending Now ----
+    // ---- Trending count (Market Pulse strip only) ----
     // No per-view-event log exists in this app (Product.views is a lifetime
     // counter bumped on every product-detail load), so "recent" activity is
     // approximated using updatedAt (which Mongoose bumps automatically on
     // every view-count increment and every favorite toggle, since the
     // schema has {timestamps:true}). Trending = real engagement (views +
     // favorites), restricted to listings that have had that engagement
-    // recently, not just ever.
+    // recently, not just ever. This is just a count for the Market Pulse
+    // strip - uncapped, so it reflects the real number rather than a
+    // display-limited one.
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-    const trendingPromise = Product.aggregate([
-      {
-        $match: {
-          status: 'Available',
-          updatedAt: { $gte: fourteenDaysAgo },
-          $or: [{ views: { $gt: 0 } }, { $expr: { $gt: [{ $size: '$favoritedBy' }, 0] } }],
-        },
-      },
+    const trendingCountPromise = Product.countDocuments({
+      status: 'Available',
+      updatedAt: { $gte: fourteenDaysAgo },
+      $or: [{ views: { $gt: 0 } }, { $expr: { $gt: [{ $size: '$favoritedBy' }, 0] } }],
+    });
+
+    // ---- Featured Items ----
+    // Every listing, ordered by trending score (views + weighted favorites).
+    // No status/recency filter here: Reserved and Sold items are included
+    // (with a badge shown client-side) and stay listed right up until the
+    // moment they're actually removed - which for Sold items happens
+    // automatically via the soldAt TTL index on the Product model (2 days
+    // after being marked Sold), so nothing further to exclude here.
+    const featuredPromise = Product.aggregate([
       {
         $addFields: {
           favoritesCount: { $size: '$favoritedBy' },
@@ -108,24 +116,7 @@ const getPulse = async (req, res, next) => {
         },
       },
       { $sort: { trendingScore: -1, updatedAt: -1 } },
-      { $limit: 8 },
     ]);
-
-    // ---- Price Drops ----
-    const priceDropsPromise = Product.find(PRICE_DROP_FILTER)
-      .select(PUBLIC_PRODUCT_FIELDS)
-      .populate('seller', 'firstName lastName phone avatar residence')
-      .sort('-updatedAt')
-      .limit(8);
-
-    // ---- Around You ----
-    const aroundYouPromise = residence
-      ? Product.find({ residence, status: { $ne: 'Sold' } })
-          .select(PUBLIC_PRODUCT_FIELDS)
-          .populate('seller', 'firstName lastName phone avatar residence')
-          .sort('-createdAt')
-          .limit(8)
-      : Promise.resolve([]);
 
     // ---- People Are Looking For (Wanted Board) ----
     const wantedPromise = Wanted.find({ status: 'Active' })
@@ -140,26 +131,25 @@ const getPulse = async (req, res, next) => {
       Product.countDocuments({ ...PRICE_DROP_FILTER, updatedAt: { $gte: today } }),
     ]);
 
-    const [justListed, trending, priceDrops, aroundYou, wanted, [newListingsToday, priceDropsToday]] =
+    const [justListed, featured, wanted, trendingCount, [newListingsToday, priceDropsToday]] =
       await Promise.all([
         justListedPromise,
-        trendingPromise,
-        priceDropsPromise,
-        aroundYouPromise,
+        featuredPromise,
         wantedPromise,
+        trendingCountPromise,
         marketPulsePromise,
       ]);
 
-    // seller/populate + views field need to load for trending's raw
+    // seller/populate + views field need to load for featured's raw
     // aggregate results too (aggregate() skips populate/select).
-    const trendingIds = trending.map((p) => p._id);
-    const trendingDocs = await Product.find({ _id: { $in: trendingIds } })
+    const featuredIds = featured.map((p) => p._id);
+    const featuredDocs = await Product.find({ _id: { $in: featuredIds } })
       .select(PUBLIC_PRODUCT_FIELDS)
       .populate('seller', 'firstName lastName phone avatar residence');
-    const trendingById = new Map(trendingDocs.map((p) => [p._id.toString(), p]));
-    const trendingWithProducts = trending
+    const featuredById = new Map(featuredDocs.map((p) => [p._id.toString(), p]));
+    const featuredWithProducts = featured
       .map((t) => {
-        const product = trendingById.get(t._id.toString());
+        const product = featuredById.get(t._id.toString());
         return product ? { product: product.toObject(), trendingScore: t.trendingScore } : null;
       })
       .filter(Boolean);
@@ -168,14 +158,12 @@ const getPulse = async (req, res, next) => {
       sinceLastVisit,
       residence,
       justListed,
-      trending: trendingWithProducts,
-      priceDrops,
-      aroundYou,
+      featured: featuredWithProducts,
       wanted,
       marketPulse: {
         newListingsToday,
         priceDropsToday,
-        trendingCount: trendingWithProducts.length,
+        trendingCount,
       },
     });
   } catch (error) {
