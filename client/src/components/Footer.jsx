@@ -93,12 +93,12 @@ export default function Footer() {
                 </a>
                 <span className="text-primary-300">|</span>
                 <a
-                  href="/suggest-improvement"
+                  href="/how-to-use"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white"
                 >
-                  Suggest Improvement
+                  How to Use
                 </a>
               </div>
 
