@@ -9,6 +9,7 @@ export default function ProductRowCard({ product, showPostedTime = false, topLef
   const image = product.images && product.images[0];
   const hasDiscount = Number(product.discount) > 0;
   const isSold = product.status === 'Sold';
+  const isReserved = product.status === 'Reserved';
   const sellerPhone = product.seller?.phone;
 
   return (
@@ -21,13 +22,13 @@ export default function ProductRowCard({ product, showPostedTime = false, topLef
             <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
           )}
 
-          {topLeftBadge && !isSold && (
+          {topLeftBadge && !isSold && !isReserved && (
             <span className="absolute top-2 left-2 h-6 px-2 rounded-full bg-black/60 text-white text-[11px] font-semibold flex items-center justify-center shadow-sm">
               {topLeftBadge}
             </span>
           )}
 
-          {hasDiscount && !isSold && (
+          {hasDiscount && !isSold && !isReserved && (
             <span className="absolute top-2 right-2 h-8 px-2 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">
               -{product.discount}%
             </span>
@@ -36,6 +37,14 @@ export default function ProductRowCard({ product, showPostedTime = false, topLef
           {isSold && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white text-sm font-bold uppercase tracking-wide">Sold</span>
+            </div>
+          )}
+
+          {isReserved && !isSold && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <span className="text-white text-sm font-bold uppercase tracking-wide bg-orange-600/90 px-3 py-1 rounded-full">
+                Reserved
+              </span>
             </div>
           )}
 

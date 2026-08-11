@@ -6,7 +6,6 @@ import ProductRowCard from '../components/ProductRowCard';
 import PulseRow from '../components/pulse/PulseRow';
 import WelcomeBack from '../components/pulse/WelcomeBack';
 import MarketPulseStrip from '../components/pulse/MarketPulseStrip';
-import AroundYouSection from '../components/pulse/AroundYouSection';
 import WantedSection from '../components/pulse/WantedSection';
 import { getPulse } from '../services/pulseService';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,11 +41,11 @@ export default function Home() {
       <CategoryList />
 
       <PulseRow
-        title="Trending on Campus"
-        subtitle="These items are getting attention right now."
-        items={data?.trending || []}
+        title="Featured Items"
+        subtitle="Every listing, ranked by what's getting the most attention."
+        items={data?.featured || []}
         isLoading={isLoading}
-        emptyMessage="Nothing trending yet."
+        emptyMessage="No listings yet."
         renderCard={({ product }) => (
           <ProductRowCard
             key={product._id}
@@ -62,22 +61,6 @@ export default function Home() {
         isLoading={isLoading}
         emptyMessage="No new listings yet. Check back soon."
         renderCard={(product) => <ProductRowCard key={product._id} product={product} showPostedTime />}
-      />
-
-      <PulseRow
-        title="Price Drops"
-        items={data?.priceDrops || []}
-        isLoading={isLoading}
-        emptyMessage="No price drops right now."
-        renderCard={(product) => (
-          <ProductRowCard key={product._id} product={product} oldPrice={product.previousPrice} />
-        )}
-      />
-
-      <AroundYouSection
-        residence={data?.residence}
-        products={data?.aroundYou || []}
-        isLoading={isLoading}
       />
 
       <WantedSection items={data?.wanted || []} isLoading={isLoading} />
