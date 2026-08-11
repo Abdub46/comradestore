@@ -20,7 +20,7 @@ export default function MarketPulseStrip({ data, isLoading }) {
         <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
           Market Pulse
         </h3>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <div className="flex flex-col items-start gap-2 text-sm md:flex-row md:flex-wrap md:gap-x-6 md:gap-y-2">
           <span>
             <strong className="text-primary-700 dark:text-primary-300">{newListingsToday}</strong> New listing
             {newListingsToday === 1 ? '' : 's'} today
