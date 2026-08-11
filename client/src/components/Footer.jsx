@@ -91,6 +91,15 @@ export default function Footer() {
                 >
                   Terms of Service
                 </a>
+                <span className="text-primary-300">|</span>
+                <a
+                  href="/suggest-improvement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white"
+                >
+                  Suggest Improvement
+                </a>
               </div>
 
               {/* Right: Buy Me a Coffee - commented out for now, revisit later

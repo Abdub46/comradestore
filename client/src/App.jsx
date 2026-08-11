@@ -30,6 +30,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Cart = lazy(() => import('./pages/Cart'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
+const SuggestImprovement = lazy(() => import('./pages/SuggestImprovement'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -60,6 +61,15 @@ export default function App() {
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/about" element={<AboutUs />} />
+
+            <Route
+              path="/suggest-improvement"
+              element={
+                <PrivateRoute>
+                  <SuggestImprovement />
+                </PrivateRoute>
+              }
+            />
 
             <Route
               path="/sell"
