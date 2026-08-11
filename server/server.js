@@ -24,6 +24,7 @@ const errorLogRoutes = require('./routes/errorLogRoutes');
 const pulseRoutes = require('./routes/pulseRoutes');
 const wantedRoutes = require('./routes/wantedRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
+const suggestionRoutes = require('./routes/suggestionRoutes');
 
 // Fail fast if critical secrets are missing - safer than starting with an
 // insecure default JWT secret
@@ -106,6 +107,7 @@ app.use('/api/errors', errorLogRoutes);
 app.use('/api/pulse', pulseRoutes);
 app.use('/api/wanted', wantedRoutes);
 app.use('/api/seller', sellerRoutes);
+app.use('/api/suggestions', suggestionRoutes);
 
 // 404 handler for unknown API routes
 app.use('/api', (req, res) => {
