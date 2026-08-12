@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Wanted = require('../models/Wanted');
+const { generateContactToken } = require('../utils/contactToken');
 
 const RESIDENCES = ['Sokomoko', 'KU', 'Annex'];
 
@@ -119,10 +120,14 @@ const getPulse = async (req, res, next) => {
     ]);
 
     // ---- People Are Looking For (Wanted Board) ----
-    const wantedPromise = Wanted.find({ status: 'Active' })
+    // Active + Reserved (not just Active) - a request being followed up on
+    // is still worth showing here, same as Featured Items above keeps
+    // Reserved products visible. Only Fulfilled is hidden.
+    const wantedPromise = Wanted.find({ status: { $in: ['Active', 'Reserved'] } })
       .populate('user', 'firstName lastName phone avatar residence')
       .sort('-createdAt')
-      .limit(6);
+      .limit(6)
+      .lean();
 
     // ---- Market Pulse (site-wide, today) ----
     const today = startOfToday();
@@ -154,12 +159,20 @@ const getPulse = async (req, res, next) => {
       })
       .filter(Boolean);
 
+    // Computed fresh on every request (never cached) - same contactToken
+    // pattern as getWantedList, so "Contact the Buyer" also works for
+    // wanted items shown here on Home.
+    const wantedWithTokens = wanted.map((w) => ({
+      ...w,
+      contactToken: generateContactToken(w._id.toString()),
+    }));
+
     res.json({
       sinceLastVisit,
       residence,
       justListed,
       featured: featuredWithProducts,
-      wanted,
+      wanted: wantedWithTokens,
       marketPulse: {
         newListingsToday,
         priceDropsToday,
