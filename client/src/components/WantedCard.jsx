@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { LocationIcon, ClockIcon } from './icons';
 import { formatKsh, timeAgo } from '../utils/format';
@@ -21,6 +22,7 @@ function formatBudget(min, max) {
 
 export default function WantedCard({ wanted }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [removed, setRemoved] = useState(false);
 
@@ -115,6 +117,14 @@ export default function WantedCard({ wanted }) {
               <span className="inline-block text-xs font-semibold bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 px-3 py-1.5 rounded-md cursor-not-allowed">
                 Already Fulfilled
               </span>
+            ) : !user ? (
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="inline-block text-xs font-semibold bg-primary-600 text-white px-3 py-1.5 rounded-md hover:bg-primary-700"
+              >
+                Contact the Buyer
+              </button>
             ) : (
               <a
                 href={buildWantedWhatsAppLink(wanted.user.phone, wanted.title)}

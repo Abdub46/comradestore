@@ -1,11 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LocationIcon } from './icons';
 import { formatKsh, timeAgo } from '../utils/format';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 import FavoriteButton from './FavoriteButton';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProductRowCard({ product, showPostedTime = false, topLeftBadge = null, oldPrice = null }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const image = product.images && product.images[0];
   const hasDiscount = Number(product.discount) > 0;
   const isSold = product.status === 'Sold';
@@ -75,14 +78,24 @@ export default function ProductRowCard({ product, showPostedTime = false, topLef
       </Link>
 
       {isSold && sellerPhone && (
-        <a
-          href={buildWhatsAppLink(sellerPhone, product.title)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full text-center text-xs font-semibold bg-primary-600 text-white py-2 hover:bg-primary-700"
-        >
-          Contact to Recheck
-        </a>
+        !user ? (
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="block w-full text-center text-xs font-semibold bg-primary-600 text-white py-2 hover:bg-primary-700"
+          >
+            Contact to Recheck
+          </button>
+        ) : (
+          <a
+            href={buildWhatsAppLink(sellerPhone, product.title)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center text-xs font-semibold bg-primary-600 text-white py-2 hover:bg-primary-700"
+          >
+            Contact to Recheck
+          </a>
+        )
       )}
     </div>
   );
