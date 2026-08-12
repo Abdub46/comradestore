@@ -154,6 +154,14 @@ const handleContactSeller = () => {
             >
               Contact Seller on WhatsApp
             </span>
+          ) : !user ? (
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="flex-1 text-center font-medium py-2.5 rounded-md text-white bg-green-600 hover:bg-green-700"
+            >
+              Contact Seller on WhatsApp
+            </button>
           ) : (
             <a
               href={buildWhatsAppLink(product.seller.phone, product.title)}
